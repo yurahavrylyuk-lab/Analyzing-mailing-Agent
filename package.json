@@ -4,7 +4,7 @@
   "description": "Architecture foundation for Delta Qoralis.",
   "private": true,
   "scripts": {
-    "test": "npm run typecheck",
+    "test": "node scripts/run-tests.cjs",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [],
@@ -12,6 +12,7 @@
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
+    "@types/node": "^22.20.4",
     "typescript": "^5.9.3"
   }
 }
