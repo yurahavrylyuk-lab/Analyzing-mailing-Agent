@@ -6,6 +6,7 @@ export type {
   ApplicationEnvironment,
   EnvironmentVariables,
   LogLevel,
+  SQLiteDatabaseUrl,
 } from "./env";
 
 /** Read-only process configuration for application entry points. */

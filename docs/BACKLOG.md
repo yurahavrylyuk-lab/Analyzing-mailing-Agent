@@ -8,7 +8,7 @@
 
 - DQ-001 — Project architecture *(completed)*
 - DQ-002 — Environment configuration *(completed)*
-- DQ-003 — Database layer
+- DQ-003 — Database layer *(completed)*
 - DQ-004 — Lead lifecycle
 - DQ-005 — Audit logging
 - DQ-006 — SSRF-safe URL handling

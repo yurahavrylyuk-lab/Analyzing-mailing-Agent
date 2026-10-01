@@ -4,7 +4,7 @@ Delta Qoralis is planned as a human-controlled lead discovery, website analysis,
 
 ## Status
 
-The repository is at **Phase 0 — Foundation**. No business discovery, crawler, website analysis, contact extraction, AI integration, messaging, database, payment, deployment, dashboard, or workflow features exist yet.
+The repository is at **Phase 0 — Foundation**. SQLite persistence infrastructure exists, but no business/domain tables, discovery, crawler, website analysis, contact extraction, AI integration, messaging, payment, deployment, dashboard, or workflow features exist yet.
 
 ## Local setup
 
@@ -22,6 +22,10 @@ The repository is at **Phase 0 — Foundation**. No business discovery, crawler,
 The application currently validates only `NODE_ENV` (`development`, `test`, or `production`) and `LOG_LEVEL` (`debug`, `info`, `warn`, or `error`). Defaults are development/debug, test/warn, and production/info.
 
 [.env.example](.env.example) lists future provider variables as documentation only; they are optional and are not interpreted yet. `dotenv` is intentionally not installed: deployment environments and local commands can provide variables directly through `process.env`. Never commit a real `.env` file.
+
+## Database
+
+The local development database defaults to `DATABASE_URL=file:./data/delta-qoralis.sqlite`. The `data/` directory is local runtime state and is not committed. Tests use an in-memory SQLite database unless they explicitly verify file persistence.
 
 ## Development workflow
 
