@@ -30,7 +30,13 @@ Delta Qoralis will be a modular TypeScript application. Configuration, domain lo
 
 The source directories will be added with real code as their owning backlog items are implemented; this foundation deliberately creates no placeholder feature code.
 
-Until application source exists, the TypeScript project validates the repository package manifest. This keeps the strict compiler configuration executable without inventing application code.
+The TypeScript project validates real application source and unit tests in strict mode without emitting production artifacts during typechecking.
+
+## Configuration flow
+
+External environment → config parser → validated readonly config → feature modules.
+
+`src/config` is the only current module that reads `process.env`. Feature modules should consume its typed configuration instead of independently reading environment variables. The parser accepts an explicit environment object so it can be tested without changing the process environment.
 
 ## Development workflow
 

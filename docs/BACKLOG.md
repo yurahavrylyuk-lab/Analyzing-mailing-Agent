@@ -7,7 +7,7 @@
 ## P0 foundation
 
 - DQ-001 — Project architecture *(completed)*
-- DQ-002 — Environment configuration
+- DQ-002 — Environment configuration *(completed)*
 - DQ-003 — Database layer
 - DQ-004 — Lead lifecycle
 - DQ-005 — Audit logging
