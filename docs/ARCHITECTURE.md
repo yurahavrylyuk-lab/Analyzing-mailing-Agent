@@ -38,6 +38,12 @@ External environment → config parser → validated readonly config → feature
 
 `src/config` is the only current module that reads `process.env`. Feature modules should consume its typed configuration instead of independently reading environment variables. The parser accepts an explicit environment object so it can be tested without changing the process environment.
 
+## Database flow
+
+Validated configuration → database factory → database abstraction → SQLite adapter → migrations → future repositories and domain services.
+
+Feature modules depend on the database abstraction and must not import the SQLite driver directly. The migration system currently creates only its `schema_migrations` infrastructure table; domain tables are introduced incrementally by their owning backlog items.
+
 ## Development workflow
 
 Task → Branch → Builder → Tests → Analyst → Pull Request → CI → Human approval → Merge.

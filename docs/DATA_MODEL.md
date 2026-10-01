@@ -1,6 +1,6 @@
 # Planned Data Model
 
-No database implementation exists yet. These are planned primary entities:
+SQLite persistence infrastructure now exists, but no business or domain tables have been implemented. These are planned primary entities:
 
 - **BusinessLead** represents a discovered business and its qualification state.
 - **WebsiteAudit** records analysis results for a BusinessLead website.
@@ -16,3 +16,5 @@ No database implementation exists yet. These are planned primary entities:
 - **AuditLog** records material, attributable actions across the lifecycle.
 
 Typical lifecycle links are BusinessLead → WebsiteAudit / Contact → Outreach → Conversation → Client → ClientRequirements / Project → Deployment, with Payment and Subscription associated with the Client or delivered Project. AuditLog is cross-cutting.
+
+Domain tables will be introduced incrementally through migrations owned by their relevant backlog items.
