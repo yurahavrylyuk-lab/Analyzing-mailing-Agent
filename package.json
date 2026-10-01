@@ -1,13 +1,17 @@
 {
-  "name": "analyzing-and-mailing-agent",
+  "name": "delta-qoralis-lead-discovery-outreach-agent",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Architecture foundation for Delta Qoralis.",
+  "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npm run typecheck",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs"
+  "type": "commonjs",
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
 }
