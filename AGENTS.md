@@ -9,6 +9,18 @@
 - Run relevant existing tests after changes. Never weaken tests merely to make them pass.
 - Document significant architectural decisions in `docs/decisions/`.
 
+## Git workflow
+
+- Inspect `git status` before modifying files and implement work on a task branch, never directly on `main`.
+- Keep commits small, scoped to one logical change, and validate before committing.
+- Never force-push, rewrite shared history, delete remote branches without approval, or commit secrets.
+- Never bypass failed CI, automatically merge a pull request, or push directly to `main` unless the human owner explicitly authorizes it.
+- Builders may create and edit approved code; Analysts review changes; humans approve merges.
+
+Branch names use `foundation/<description>`, `feature/<ticket>-<description>`, `fix/<ticket>-<description>`, `docs/<description>`, or `chore/<description>`.
+
+Commit messages use a scoped conventional prefix: `feat:`, `fix:`, `chore:`, `docs:`, `test:`, or `refactor:`. Commits must not contain generated junk or unrelated edits.
+
 ## Roles
 
 - **Architect** plans architecture and does not normally implement application code.

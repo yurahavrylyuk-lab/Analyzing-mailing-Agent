@@ -1,6 +1,6 @@
 # Development Plan
 
-- **Phase 0 — Foundation** *(current)*
+- **Phase 0 — Foundation** *(current; project architecture and Git/GitHub development infrastructure)*
 - Phase 1 — Business discovery
 - Phase 2 — Website crawler
 - Phase 3 — Website analysis

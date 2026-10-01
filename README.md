@@ -17,6 +17,14 @@ The repository is at **Phase 0 — Foundation**. No business discovery, crawler,
 - `npm test` — runs the TypeScript validation.
 - `npm run typecheck` — checks the TypeScript project without emitting files.
 
+## Development workflow
+
+Repository: <https://github.com/yurahavrylyuk-lab/Analyzing-mailing-Agent>
+
+Create task branch → implement → validate → commit → push → pull request → review → merge.
+
+Direct feature development on `main` is discouraged. Human approval is required before merging.
+
 ## Documentation
 
 - [Product](docs/PRODUCT.md)

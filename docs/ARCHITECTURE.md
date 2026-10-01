@@ -31,3 +31,11 @@ Delta Qoralis will be a modular TypeScript application. Configuration, domain lo
 The source directories will be added with real code as their owning backlog items are implemented; this foundation deliberately creates no placeholder feature code.
 
 Until application source exists, the TypeScript project validates the repository package manifest. This keeps the strict compiler configuration executable without inventing application code.
+
+## Development workflow
+
+Task → Branch → Builder → Tests → Analyst → Pull Request → CI → Human approval → Merge.
+
+GitHub is currently development infrastructure: it hosts the repository, pull requests, and CI checks. It is not an application dependency. A future application-level GitHub provider may live near `src/integrations/github/` and, after explicit implementation approval, support approved client repository creation, branch creation, commits, pushes, repository-state retrieval, and preview/deployment metadata.
+
+That future provider must require explicit human approval for repository creation, production-branch modification, merges, production deployment, and destructive operations. It must never force-push.
