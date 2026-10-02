@@ -4,7 +4,7 @@ Delta Qoralis is planned as a human-controlled lead discovery, website analysis,
 
 ## Status
 
-The repository is at **Phase 0 — Foundation**. SQLite persistence infrastructure exists, but no business/domain tables, discovery, crawler, website analysis, contact extraction, AI integration, messaging, payment, deployment, dashboard, or workflow features exist yet.
+The repository is at **Phase 0 — Foundation**. SQLite persistence and the first persisted BusinessLead lifecycle exist, but discovery, crawling, analysis, qualification, contacts, outreach, AI, messaging, payments, deployment, dashboard, and workflows do not.
 
 ## Local setup
 
@@ -26,6 +26,10 @@ The application currently validates only `NODE_ENV` (`development`, `test`, or `
 ## Database
 
 The local development database defaults to `DATABASE_URL=file:./data/delta-qoralis.sqlite`. The `data/` directory is local runtime state and is not committed. Tests use an in-memory SQLite database unless they explicitly verify file persistence.
+
+## Lead lifecycle
+
+The initial lead API records manually sourced businesses, retrieves them, manages recorded/reviewing/archived transitions, and stores website presence observations. Mutations use optimistic version checks; URL handling validates storage format only and performs no network requests.
 
 ## Development workflow
 
