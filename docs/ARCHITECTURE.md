@@ -44,6 +44,12 @@ Validated configuration → database factory → database abstraction → SQLite
 
 Feature modules depend on the database abstraction and must not import the SQLite driver directly. The migration system currently creates only its `schema_migrations` infrastructure table; domain tables are introduced incrementally by their owning backlog items.
 
+## Lead lifecycle flow
+
+Validated lead input → lifecycle service → lead repository interface → database abstraction → `business_leads`.
+
+The service owns lifecycle transitions, website-observation rules, URL storage validation, and optimistic version checks. The database-backed repository contains only persistence operations and does not import the SQLite driver. Discovery, qualification, crawling, and outreach remain separate future modules.
+
 ## Development workflow
 
 Task → Branch → Builder → Tests → Analyst → Pull Request → CI → Human approval → Merge.
