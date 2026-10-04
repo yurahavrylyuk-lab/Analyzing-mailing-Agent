@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted for DQ-005 implementation; pending Analyst review.
+Accepted and completed in DQ-005.
 
 ## Context
 

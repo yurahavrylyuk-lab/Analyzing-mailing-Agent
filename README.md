@@ -33,6 +33,10 @@ The initial lead API records manually sourced businesses, retrieves them, manage
 
 Every actual lead mutation requires a claimed human or system actor and writes one allowlisted audit event in the same SQLite transaction. Audit history is ordered by its database ID and protected against updates and deletes. Audit details intentionally exclude business names, source references, and raw website URLs.
 
+## Network target safety
+
+`src/network-safety` normalizes HTTP(S) targets, permits only default ports, blocks local hostnames and non-public IP addresses, validates every injected DNS answer, and returns the exact approved addresses for future connection pinning. Redirect targets receive the same complete validation. This module performs no HTTP requests and is separate from lead website URL storage validation.
+
 ## Development workflow
 
 Repository: <https://github.com/yurahavrylyuk-lab/Analyzing-mailing-Agent>
