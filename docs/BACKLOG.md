@@ -10,7 +10,7 @@
 - DQ-002 — Environment configuration *(completed)*
 - DQ-003 — Database layer *(completed)*
 - DQ-004 — Lead lifecycle *(completed)*
-- DQ-005 — Audit logging
+- DQ-005 — Audit logging *(completed)*
 - DQ-006 — SSRF-safe URL handling
 - DQ-007 — Do-not-contact protection
 - DQ-008 — Git & GitHub Development Foundation *(completed)*

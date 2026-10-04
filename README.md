@@ -4,7 +4,7 @@ Delta Qoralis is planned as a human-controlled lead discovery, website analysis,
 
 ## Status
 
-The repository is at **Phase 0 — Foundation**. SQLite persistence and the first persisted BusinessLead lifecycle exist, but discovery, crawling, analysis, qualification, contacts, outreach, AI, messaging, payments, deployment, dashboard, and workflows do not.
+The repository is at **Phase 0 — Foundation**. SQLite persistence, the first persisted BusinessLead lifecycle, and append-only audit events for lead mutations exist, but discovery, crawling, analysis, qualification, contacts, outreach, AI, messaging, payments, deployment, dashboard, and workflows do not.
 
 ## Local setup
 
@@ -30,6 +30,8 @@ The local development database defaults to `DATABASE_URL=file:./data/delta-qoral
 ## Lead lifecycle
 
 The initial lead API records manually sourced businesses, retrieves them, manages recorded/reviewing/archived transitions, and stores website presence observations. Mutations use optimistic version checks; URL handling validates storage format only and performs no network requests.
+
+Every actual lead mutation requires a claimed human or system actor and writes one allowlisted audit event in the same SQLite transaction. Audit history is ordered by its database ID and protected against updates and deletes. Audit details intentionally exclude business names, source references, and raw website URLs.
 
 ## Development workflow
 

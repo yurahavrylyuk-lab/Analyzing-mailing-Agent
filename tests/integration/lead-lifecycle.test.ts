@@ -5,9 +5,9 @@ import { join } from "node:path";
 import { test } from "node:test";
 
 import { applyMigrations, createDatabase, type Database } from "../../src/db";
+import { auditMigrations, type AuditActor } from "../../src/audit";
 import {
   ArchivedLeadWebsiteMutationError,
-  DatabaseLeadRepository,
   InvalidLeadInputError,
   InvalidLeadTransitionError,
   LeadNotFoundError,
@@ -32,6 +32,8 @@ const baseInput: CreateLeadInput = {
   websiteObservation: { presence: "unknown" },
 };
 
+const actor: AuditActor = { type: "human", id: "lead-reviewer" };
+
 function sequence<T>(values: readonly T[]): () => T {
   let index = 0;
   return () => {
@@ -46,9 +48,8 @@ function sequence<T>(values: readonly T[]): () => T {
 
 function createHarness(options: LeadServiceOptions = {}) {
   const database = createDatabase({ url: "file::memory:" });
-  applyMigrations(database, leadMigrations);
-  const repository = new DatabaseLeadRepository(database);
-  const service = new LeadService(repository, {
+  applyMigrations(database, [...leadMigrations, ...auditMigrations]);
+  const service = new LeadService(database, {
     idGenerator: options.idGenerator ?? sequence(ids),
     clock:
       options.clock ??
@@ -89,15 +90,15 @@ test("creates and retrieves unknown, missing, and present observations", () => {
   const { database, service } = createHarness();
 
   try {
-    const unknown = service.createLead(baseInput);
+    const unknown = service.createLead(baseInput, actor);
     const missing = service.createLead({
       ...baseInput,
       websiteObservation: { presence: "missing" },
-    });
+    }, actor);
     const present = service.createLead({
       ...baseInput,
       websiteObservation: { presence: "present", url: "HTTPS://Example.COM" },
-    });
+    }, actor);
 
     assert.deepEqual(service.getLead(unknown.id).websiteObservation, { presence: "unknown" });
     assert.deepEqual(service.getLead(missing.id).websiteObservation, { presence: "missing" });
@@ -122,8 +123,8 @@ test("does not add uniqueness constraints to lead identity fields", () => {
   };
 
   try {
-    assert.doesNotThrow(() => service.createLead(duplicateInput));
-    assert.doesNotThrow(() => service.createLead(duplicateInput));
+    assert.doesNotThrow(() => service.createLead(duplicateInput, actor));
+    assert.doesNotThrow(() => service.createLead(duplicateInput, actor));
   } finally {
     database.close();
   }
@@ -135,18 +136,18 @@ test("persists a lead across file-backed database reopen", () => {
 
   try {
     const firstDatabase = createDatabase({ url });
-    applyMigrations(firstDatabase, leadMigrations);
-    const firstService = new LeadService(new DatabaseLeadRepository(firstDatabase), {
+    applyMigrations(firstDatabase, [...leadMigrations, ...auditMigrations]);
+    const firstService = new LeadService(firstDatabase, {
       idGenerator: () => ids[0],
       clock: () => new Date("2026-01-01T00:00:00.000Z"),
     });
-    const created = firstService.createLead(baseInput);
+    const created = firstService.createLead(baseInput, actor);
     firstDatabase.close();
 
     const reopenedDatabase = createDatabase({ url });
     try {
-      applyMigrations(reopenedDatabase, leadMigrations);
-      const reopenedService = new LeadService(new DatabaseLeadRepository(reopenedDatabase));
+      applyMigrations(reopenedDatabase, [...leadMigrations, ...auditMigrations]);
+      const reopenedService = new LeadService(reopenedDatabase);
       assert.deepEqual(reopenedService.getLead(created.id), created);
     } finally {
       reopenedDatabase.close();
@@ -201,10 +202,10 @@ test("performs every valid lifecycle transition with one version increment", () 
   const { database, service } = createHarness();
 
   try {
-    const recorded = service.createLead(baseInput);
-    const reviewing = service.transitionLead(recorded.id, "reviewing", 1);
-    const archived = service.transitionLead(recorded.id, "archived", 2);
-    const restored = service.transitionLead(recorded.id, "reviewing", 3);
+    const recorded = service.createLead(baseInput, actor);
+    const reviewing = service.transitionLead(recorded.id, "reviewing", 1, actor);
+    const archived = service.transitionLead(recorded.id, "archived", 2, actor);
+    const restored = service.transitionLead(recorded.id, "reviewing", 3, actor);
 
     assert.deepEqual(
       [reviewing.status, archived.status, restored.status],
@@ -228,10 +229,10 @@ test("invalid transitions leave the persisted lead unchanged", () => {
   const { database, service } = createHarness();
 
   try {
-    const created = service.createLead(baseInput);
-    const reviewing = service.transitionLead(created.id, "reviewing", 1);
+    const created = service.createLead(baseInput, actor);
+    const reviewing = service.transitionLead(created.id, "reviewing", 1, actor);
     assert.throws(
-      () => service.transitionLead(created.id, "recorded", 2),
+      () => service.transitionLead(created.id, "recorded", 2, actor),
       InvalidLeadTransitionError,
     );
     assert.deepEqual(service.getLead(created.id), reviewing);
@@ -244,11 +245,11 @@ test("same-state transitions are no-ops but still enforce expected version", () 
   const { database, service } = createHarness();
 
   try {
-    const created = service.createLead(baseInput);
-    assert.deepEqual(service.transitionLead(created.id, "recorded", 1), created);
-    const reviewing = service.transitionLead(created.id, "reviewing", 1);
+    const created = service.createLead(baseInput, actor);
+    assert.deepEqual(service.transitionLead(created.id, "recorded", 1, actor), created);
+    const reviewing = service.transitionLead(created.id, "reviewing", 1, actor);
     assert.throws(
-      () => service.transitionLead(created.id, "reviewing", 1),
+      () => service.transitionLead(created.id, "reviewing", 1, actor),
       StaleLeadVersionError,
     );
     assert.equal(reviewing.version, 2);
@@ -261,9 +262,9 @@ test("website updates normalize values, preserve status, and no-op when identica
   const { database, service } = createHarness();
 
   try {
-    const created = service.createLead(baseInput);
+    const created = service.createLead(baseInput, actor);
     assert.deepEqual(
-      service.setWebsiteObservation(created.id, { presence: "unknown" }, 1),
+      service.setWebsiteObservation(created.id, { presence: "unknown" }, 1, actor),
       created,
     );
 
@@ -271,6 +272,7 @@ test("website updates normalize values, preserve status, and no-op when identica
       created.id,
       { presence: "present", url: "HTTPS://Example.COM" },
       1,
+      actor,
     );
     assert.deepEqual(present.websiteObservation, {
       presence: "present",
@@ -284,6 +286,7 @@ test("website updates normalize values, preserve status, and no-op when identica
         created.id,
         { presence: "present", url: "https://example.com/" },
         2,
+        actor,
       ),
       present,
     );
@@ -296,10 +299,16 @@ test("archived leads reject website observation updates", () => {
   const { database, service } = createHarness();
 
   try {
-    const created = service.createLead(baseInput);
-    const archived = service.transitionLead(created.id, "archived", 1);
+    const created = service.createLead(baseInput, actor);
+    const archived = service.transitionLead(created.id, "archived", 1, actor);
     assert.throws(
-      () => service.setWebsiteObservation(created.id, { presence: "unknown" }, archived.version),
+      () =>
+        service.setWebsiteObservation(
+          created.id,
+          { presence: "unknown" },
+          archived.version,
+          actor,
+        ),
       ArchivedLeadWebsiteMutationError,
     );
     assert.deepEqual(service.getLead(created.id), archived);
@@ -313,10 +322,10 @@ test("reports missing leads and rejects stale writes including identical updates
 
   try {
     assert.throws(() => service.getLead(ids[0]), LeadNotFoundError);
-    const created = service.createLead(baseInput);
-    service.setWebsiteObservation(created.id, { presence: "missing" }, 1);
+    const created = service.createLead(baseInput, actor);
+    service.setWebsiteObservation(created.id, { presence: "missing" }, 1, actor);
     assert.throws(
-      () => service.setWebsiteObservation(created.id, { presence: "missing" }, 1),
+      () => service.setWebsiteObservation(created.id, { presence: "missing" }, 1, actor),
       StaleLeadVersionError,
     );
   } finally {
@@ -328,14 +337,15 @@ test("two mutations based on the same version cannot both succeed", () => {
   const { database, service } = createHarness();
 
   try {
-    const created = service.createLead(baseInput);
-    service.transitionLead(created.id, "reviewing", created.version);
+    const created = service.createLead(baseInput, actor);
+    service.transitionLead(created.id, "reviewing", created.version, actor);
     assert.throws(
       () =>
         service.setWebsiteObservation(
           created.id,
           { presence: "present", url: "https://example.com" },
           created.version,
+          actor,
         ),
       StaleLeadVersionError,
     );
@@ -348,7 +358,7 @@ test("service rejects unsafe website URLs without changing the lead", () => {
   const { database, service } = createHarness();
 
   try {
-    const created = service.createLead(baseInput);
+    const created = service.createLead(baseInput, actor);
     for (const url of [
       "relative/path",
       "ftp://example.com/file",
@@ -360,6 +370,7 @@ test("service rejects unsafe website URLs without changing the lead", () => {
             created.id,
             { presence: "present", url },
             created.version,
+            actor,
           ),
         InvalidLeadInputError,
       );
