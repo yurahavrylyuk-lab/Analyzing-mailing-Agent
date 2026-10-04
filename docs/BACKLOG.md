@@ -6,14 +6,14 @@
 
 ## P0 foundation
 
-- DQ-001 — Project architecture *(completed)*
-- DQ-002 — Environment configuration *(completed)*
-- DQ-003 — Database layer *(completed)*
-- DQ-004 — Lead lifecycle *(completed)*
-- DQ-005 — Audit logging *(completed)*
-- DQ-006 — SSRF-safe URL handling
-- DQ-007 — Do-not-contact protection
-- DQ-008 — Git & GitHub Development Foundation *(completed)*
+- DQ-001 — Project architecture *(completed)*. Established the modular boundaries, documentation foundation, and development conventions.
+- DQ-002 — Environment configuration *(completed)*. Added validated, typed runtime configuration with safe defaults and non-reflective errors.
+- DQ-003 — Database layer *(completed)*. Added the SQLite abstraction, adapter, and deterministic migration system.
+- DQ-004 — Lead lifecycle *(completed)*. Added persisted BusinessLead creation, retrieval, lifecycle transitions, website observations, and optimistic concurrency.
+- DQ-005 — Audit logging *(completed)*. Added attributable, append-only audit events committed atomically with lead mutations.
+- DQ-006 — SSRF-safe URL handling *(completed)*. Adds strict network URL, address, DNS, and redirect validation without fetching content.
+- DQ-007 — Do-not-contact protection *(planned)*. Will add fail-closed contact suppression before future outreach capabilities.
+- DQ-008 — Git & GitHub Development Foundation *(completed)*. Established the reviewed branch, pull-request, CI, and human-approved merge workflow.
 
 ## P1 product pipeline
 

@@ -7,6 +7,7 @@ Delta Qoralis will be a modular TypeScript application. Configuration, domain lo
 - `config`: validated application configuration, separated from business logic.
 - `core`: shared domain primitives and narrow cross-cutting contracts.
 - `db`: persistence interfaces and implementations.
+- `network-safety`: URL, address, DNS, and redirect validation for future outbound connections.
 - `discovery`: business-source discovery.
 - `crawler`: safe website retrieval and crawl results.
 - `website-analysis`: analysis of crawler results.
@@ -54,6 +55,12 @@ The service owns lifecycle transitions, website-observation rules, URL storage v
 ## Audit flow
 
 Lead creation uses the resulting `createdAt`; status and website-observation changes use the resulting `updatedAt`. The service does not call a second clock, and SQLite accepts only the same canonical `YYYY-MM-DDTHH:mm:ss.sssZ` UTC representation produced by `Date.toISOString()`. Event details are discriminated, strictly allowlisted, and limited to 2048 UTF-8 bytes. Audit history uses bound entity parameters and ascending integer IDs, while database triggers enforce append-only storage. Attribution records a claimed actor and does not provide authentication or authorization.
+
+## Network target safety flow
+
+Untrusted URL → HTTP(S) normalization and host policy → injected DNS resolver → validate every A/AAAA answer → immutable safe target containing the normalized URL, hostname, port, and approved addresses.
+
+Lead website storage validation remains separate and performs no DNS work. The future crawler must disable automatic redirects, validate every `Location` as a new target, cap redirects (for example, at five), and connect only to an address returned by the matching validation result. It must retain the hostname separately for HTTP authority, TLS SNI, and certificate verification instead of allowing the transport to resolve DNS again.
 
 ## Development workflow
 
