@@ -11,13 +11,14 @@ Delta Qoralis will be a modular TypeScript application. Configuration, domain lo
 - `crawler`: safe website retrieval and crawl results.
 - `website-analysis`: analysis of crawler results.
 - `contacts`: contact discovery and consent-related contact state.
-- `leads`: lead lifecycle and qualification.
+- `leads`: persisted lead lifecycle and its audited unit of work; qualification remains future work.
+- `audit`: attributable, append-only event persistence and history reads.
 - `outreach`: draft creation and approval-gated delivery requests.
 - `conversations`: reply and conversation state.
 - `clients`, `projects`, `subscriptions`: post-conversion client work.
 - `payments`, `deployment`: replaceable provider adapters for payments and hosting.
 - `dashboard`, `cli`, `workflows`: human-facing and orchestration entry points.
-- `compliance`, `logging`: safety controls and auditable operational records.
+- `compliance`, `logging`: future safety controls and operational diagnostics.
 
 ## Dependency boundaries
 
@@ -40,15 +41,19 @@ External environment → config parser → validated readonly config → feature
 
 ## Database flow
 
-Validated configuration → database factory → database abstraction → SQLite adapter → migrations → future repositories and domain services.
+Validated configuration → database factory → database abstraction → SQLite adapter → migrations → repositories and domain services.
 
-Feature modules depend on the database abstraction and must not import the SQLite driver directly. The migration system currently creates only its `schema_migrations` infrastructure table; domain tables are introduced incrementally by their owning backlog items.
+Feature modules depend on the database abstraction and must not import the SQLite driver directly. Migrations currently own the `business_leads` and `audit_events` domain tables in addition to `schema_migrations`.
 
 ## Lead lifecycle flow
 
-Validated lead input → lifecycle service → lead repository interface → database abstraction → `business_leads`.
+Database-backed lifecycle service plus validated lead input and actor → internal audited lead unit of work → lead and audit repositories → one database transaction → `business_leads` plus `audit_events`.
 
-The service owns lifecycle transitions, website-observation rules, URL storage validation, and optimistic version checks. The database-backed repository contains only persistence operations and does not import the SQLite driver. Discovery, qualification, crawling, and outreach remain separate future modules.
+The service owns lifecycle transitions, website-observation rules, URL storage validation, optimistic version checks, and the mapping from successful mutations to typed audit events. Its public constructor accepts the database, not a substitutable persistence unit, and internally constructs the unit of work that supplies both repositories with that database instance and transaction. An audit failure therefore rolls back its lead change. No-op and rejected operations produce no event. Database-backed repositories contain only persistence operations and do not import the SQLite driver. Discovery, qualification, crawling, and outreach remain separate future modules.
+
+## Audit flow
+
+Lead creation uses the resulting `createdAt`; status and website-observation changes use the resulting `updatedAt`. The service does not call a second clock, and SQLite accepts only the same canonical `YYYY-MM-DDTHH:mm:ss.sssZ` UTC representation produced by `Date.toISOString()`. Event details are discriminated, strictly allowlisted, and limited to 2048 UTF-8 bytes. Audit history uses bound entity parameters and ascending integer IDs, while database triggers enforce append-only storage. Attribution records a claimed actor and does not provide authentication or authorization.
 
 ## Development workflow
 
