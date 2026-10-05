@@ -29,6 +29,10 @@ export type LeadWebsiteObservationChangedDetails = Readonly<{
   version: number;
 }>;
 
+export type LeadDoNotContactAppliedDetails = Readonly<{
+  reasonCode: "manual" | "requested";
+}>;
+
 type AuditEventBase = Readonly<{
   occurredAt: string;
   entityType: "business_lead";
@@ -46,6 +50,10 @@ export type AuditEventInput = AuditEventBase &
     | Readonly<{
         eventType: "lead.website_observation_changed";
         details: LeadWebsiteObservationChangedDetails;
+      }>
+    | Readonly<{
+        eventType: "lead.do_not_contact_applied";
+        details: LeadDoNotContactAppliedDetails;
       }>
   );
 
@@ -175,6 +183,17 @@ function normalizeDetails(input: AuditEventInput): AuditEventInput["details"] {
       urlChanged: details.urlChanged,
       version: details.version,
     });
+  }
+
+  if (input.eventType === "lead.do_not_contact_applied") {
+    if (
+      !hasExactKeys(details, ["reasonCode"]) ||
+      (details.reasonCode !== "manual" && details.reasonCode !== "requested")
+    ) {
+      throw new InvalidAuditEventError();
+    }
+
+    return Object.freeze({ reasonCode: details.reasonCode });
   }
 
   throw new InvalidAuditEventError();

@@ -8,6 +8,7 @@ export type {
   AuditActor,
   AuditEvent,
   AuditEventInput,
+  LeadDoNotContactAppliedDetails,
   LeadCreatedDetails,
   LeadStatusChangedDetails,
   LeadWebsiteObservationChangedDetails,

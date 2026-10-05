@@ -36,6 +36,10 @@ const allowedTransitions: Readonly<Record<LeadStatus, readonly LeadStatus[]>> = 
 const uuidV4Pattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+export function isBusinessLeadId(value: unknown): value is string {
+  return typeof value === "string" && uuidV4Pattern.test(value);
+}
+
 function normalizeRequiredText(value: string, fieldName: string): string {
   if (typeof value !== "string" || value.trim().length === 0) {
     throw new InvalidLeadInputError(`${fieldName} must be nonempty text.`);
@@ -103,7 +107,7 @@ export function createBusinessLead(
   id: string,
   now: Date,
 ): BusinessLead {
-  if (!uuidV4Pattern.test(id)) {
+  if (!isBusinessLeadId(id)) {
     throw new InvalidLeadInputError("Generated business lead ID must be a UUID v4.");
   }
 

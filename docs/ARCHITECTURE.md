@@ -11,7 +11,7 @@ Delta Qoralis will be a modular TypeScript application. Configuration, domain lo
 - `discovery`: business-source discovery.
 - `crawler`: safe website retrieval and crawl results.
 - `website-analysis`: analysis of crawler results.
-- `contacts`: contact discovery and consent-related contact state.
+- `contacts`: future contact discovery and contact records.
 - `leads`: persisted lead lifecycle and its audited unit of work; qualification remains future work.
 - `audit`: attributable, append-only event persistence and history reads.
 - `outreach`: draft creation and approval-gated delivery requests.
@@ -19,7 +19,8 @@ Delta Qoralis will be a modular TypeScript application. Configuration, domain lo
 - `clients`, `projects`, `subscriptions`: post-conversion client work.
 - `payments`, `deployment`: replaceable provider adapters for payments and hosting.
 - `dashboard`, `cli`, `workflows`: human-facing and orchestration entry points.
-- `compliance`, `logging`: future safety controls and operational diagnostics.
+- `compliance`: lead-specific do-not-contact suppression and the fail-closed contact guard.
+- `logging`: future operational diagnostics.
 
 ## Dependency boundaries
 
@@ -44,7 +45,7 @@ External environment → config parser → validated readonly config → feature
 
 Validated configuration → database factory → database abstraction → SQLite adapter → migrations → repositories and domain services.
 
-Feature modules depend on the database abstraction and must not import the SQLite driver directly. Migrations currently own the `business_leads` and `audit_events` domain tables in addition to `schema_migrations`.
+Feature modules depend on the database abstraction and must not import the SQLite driver directly. Migrations currently own the `business_leads`, `audit_events`, and `lead_contact_suppressions` domain tables in addition to `schema_migrations`.
 
 ## Lead lifecycle flow
 
@@ -61,6 +62,12 @@ Lead creation uses the resulting `createdAt`; status and website-observation cha
 Untrusted URL → HTTP(S) normalization and host policy → injected DNS resolver → validate every A/AAAA answer → immutable safe target containing the normalized URL, hostname, port, and approved addresses.
 
 Lead website storage validation remains separate and performs no DNS work. The future crawler must disable automatic redirects, validate every `Location` as a new target, cap redirects (for example, at five), and connect only to an address returned by the matching validation result. It must retain the hostname separately for HTTP authority, TLS SNI, and certificate verification instead of allowing the transport to resolve DNS again.
+
+## Do-not-contact flow
+
+Validated lead, reason, and actor → one database transaction → insert suppression if absent → append `lead.do_not_contact_applied` → commit. The service constructs its suppression, lead, and audit repositories from the same `Database`; an audit failure therefore rolls back a new suppression. A pre-existing suppression is an idempotent no-op that returns the original row and emits no event.
+
+Suppression is one-way and independent from lead lifecycle and versioning. A fresh guard query joins `business_leads` with `lead_contact_suppressions`, permits only unsuppressed `recorded` or `reviewing` leads, and blocks or fails closed for every other state. Clearing suppression, contact discovery, and outreach remain future, separately reviewed features.
 
 ## Development workflow
 

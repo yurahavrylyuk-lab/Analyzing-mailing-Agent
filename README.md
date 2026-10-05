@@ -4,7 +4,7 @@ Delta Qoralis is planned as a human-controlled lead discovery, website analysis,
 
 ## Status
 
-The repository is at **Phase 0 — Foundation**. SQLite persistence, the first persisted BusinessLead lifecycle, and append-only audit events for lead mutations exist, but discovery, crawling, analysis, qualification, contacts, outreach, AI, messaging, payments, deployment, dashboard, and workflows do not.
+The repository is at **Phase 0 — Foundation**. SQLite persistence, the BusinessLead lifecycle, append-only audit events, SSRF-safe network-target validation, and lead-specific do-not-contact protection exist. Discovery, crawling, analysis, qualification, contact discovery, outreach, AI, messaging, payments, deployment, dashboard, and workflows do not.
 
 ## Local setup
 
@@ -36,6 +36,10 @@ Every actual lead mutation requires a claimed human or system actor and writes o
 ## Network target safety
 
 `src/network-safety` normalizes HTTP(S) targets, permits only default ports, blocks local hostnames and non-public IP addresses, validates every injected DNS answer, and returns the exact approved addresses for future connection pinning. Redirect targets receive the same complete validation. This module performs no HTTP requests and is separate from lead website URL storage validation.
+
+## Do-not-contact protection
+
+`src/compliance` applies an insert-only suppression to a BusinessLead and records one attributable audit event in the same transaction. Repeated valid applications preserve the original reason, actor, and timestamp. The contact guard checks current lead and suppression state on every call, allows only unsuppressed recorded or reviewing leads, and fails closed when it cannot make a reliable decision. DQ-007 adds no contacts, outreach, sending, or unsuppression workflow.
 
 ## Development workflow
 

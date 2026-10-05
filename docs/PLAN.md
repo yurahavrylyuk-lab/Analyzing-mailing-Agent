@@ -1,13 +1,37 @@
 # Development Plan
 
-- **Phase 0 — Foundation** *(current; core architecture, configuration, persistence, lead lifecycle, auditability, and network-target safety)*
-- Phase 1 — Business discovery
-- Phase 2 — Website crawler
-- Phase 3 — Website analysis
-- Phase 4 — Lead qualification
-- Phase 5 — Contact extraction
-- Phase 6 — Outreach drafting
-- Phase 7 — MVP orchestration
-- Phase 8+ — Real sending, replies, CRM, website creation, deployment, payments, subscriptions, and controlled autonomy
+## Phase 0 — Foundation *(completed)*
 
-Only Phase 0 is in scope now. DQ-001 through DQ-006 and DQ-008 are completed; DQ-007 remains planned. Product-pipeline phases have not started.
+Established architecture, configuration, persistence, lead lifecycle, auditability, network-target safety, repository workflow, and do-not-contact protection. DQ-001 through DQ-008 are completed.
+
+## Phase 1 — Lead Discovery *(planned)*
+
+Add approved, replaceable discovery sources and record source provenance without starting contact activity.
+
+## Phase 2 — Crawling *(planned)*
+
+Add bounded website retrieval using the approved-address and redirect-validation guarantees established in DQ-006.
+
+## Phase 3 — Analysis *(planned)*
+
+Turn stored website evidence into reviewable structured observations behind replaceable analysis interfaces.
+
+## Phase 4 — Qualification *(planned)*
+
+Apply explicit business qualification rules to persisted evidence while keeping decisions explainable and human-controlled.
+
+## Phase 5 — Contact Discovery *(planned)*
+
+Introduce contact records and provenance only after the DQ-007 suppression guard is available to every future contact path.
+
+## Phase 6 — Outreach *(planned)*
+
+Create approval-gated outreach drafts and later separately authorize any real sending or reply handling.
+
+## Phase 7 — MVP Pipeline *(planned)*
+
+Orchestrate discovery through reviewed outreach with observable state, recovery, and human checkpoints.
+
+## Later *(later)*
+
+Real sending, replies, CRM capabilities, website delivery, deployments, payments, subscriptions, and controlled autonomy remain outside the current roadmap scope.
