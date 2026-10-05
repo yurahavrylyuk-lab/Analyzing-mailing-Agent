@@ -12,18 +12,18 @@
 - DQ-004 — Lead lifecycle *(completed)*. Added persisted BusinessLead creation, retrieval, lifecycle transitions, website observations, and optimistic concurrency.
 - DQ-005 — Audit logging *(completed)*. Added attributable, append-only audit events committed atomically with lead mutations.
 - DQ-006 — SSRF-safe URL handling *(completed)*. Adds strict network URL, address, DNS, and redirect validation without fetching content.
-- DQ-007 — Do-not-contact protection *(planned)*. Will add fail-closed contact suppression before future outreach capabilities.
+- DQ-007 — Do-not-contact protection *(completed)*. Added fail-closed, lead-specific contact suppression before future outreach capabilities.
 - DQ-008 — Git & GitHub Development Foundation *(completed)*. Established the reviewed branch, pull-request, CI, and human-approved merge workflow.
 
 ## P1 product pipeline
 
-- DQ-010 through DQ-015 — Discovery
-- DQ-020 through DQ-024 — Crawling
-- DQ-030 through DQ-039 — Analysis
-- DQ-040 through DQ-043 — Qualification
-- DQ-050 through DQ-054 — Contact discovery
-- DQ-060 through DQ-066 — Outreach
-- DQ-070 through DQ-072 — MVP pipeline
+- DQ-010 through DQ-015 — Discovery. Introduce approved business-source providers and persist discovered leads without scraping prohibited sources.
+- DQ-020 through DQ-024 — Crawling. Retrieve approved public website targets through bounded, SSRF-safe transport and retain crawl results.
+- DQ-030 through DQ-039 — Analysis. Analyze persisted website evidence behind replaceable interfaces while keeping results attributable and reviewable.
+- DQ-040 through DQ-043 — Qualification. Apply explicit qualification criteria to evidence without initiating contact or delivery.
+- DQ-050 through DQ-054 — Contact discovery. Discover and validate contact data while enforcing suppression and provenance requirements.
+- DQ-060 through DQ-066 — Outreach. Create human-reviewable drafts and approval-gated delivery workflows; real sending remains separately controlled.
+- DQ-070 through DQ-072 — MVP pipeline. Orchestrate the reviewed stages with observable, recoverable workflow state and human checkpoints.
 
 ## Later priorities
 

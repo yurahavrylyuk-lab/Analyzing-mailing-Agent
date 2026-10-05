@@ -111,3 +111,21 @@ test("rejects malformed event-specific details", () => {
     );
   }
 });
+
+test("accepts only the exact do-not-contact audit detail shape", () => {
+  const event = {
+    ...validEvent,
+    eventType: "lead.do_not_contact_applied" as const,
+    details: { reasonCode: "requested" as const },
+  };
+  assert.deepEqual(normalizeAuditEventInput(event).details, {
+    reasonCode: "requested",
+  });
+  assert.throws(
+    () => normalizeAuditEventInput({
+      ...event,
+      details: { reasonCode: "manual", notes: "not allowed" },
+    } as never),
+    InvalidAuditEventError,
+  );
+});

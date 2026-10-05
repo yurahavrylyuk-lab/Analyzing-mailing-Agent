@@ -1,5 +1,6 @@
 export {
   LEAD_STATUSES,
+  isBusinessLeadId,
   normalizeWebsiteObservation,
   normalizeWebsiteUrl,
 } from "./domain";
