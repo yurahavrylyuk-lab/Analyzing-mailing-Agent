@@ -11,6 +11,7 @@ The following are non-negotiable:
 - Network targets allow only normalized HTTP(S) default-port URLs whose direct address or every DNS answer is public. Local names, unsafe addresses, mixed safe/unsafe DNS answers, and unsafe redirects fail closed.
 - The future crawler must disable automatic redirects, revalidate every redirect, cap redirect depth, and connect to an approved resolved address without a second DNS lookup.
 - Lead-specific do-not-contact suppression is insert-only, audited atomically, and checked through a fresh fail-closed guard before any future contact action.
+- Discovered lead identity is provider-specific and enforced by a case-sensitive partial unique index. Rediscovery never refreshes lead fields, clears suppression, or appends another creation event.
 - Future unsubscribe ingestion and any future suppression-clearing workflow require separate design and review; neither exists in DQ-007.
 
 New external providers must be introduced behind provider interfaces and reviewed for least-privilege access.
@@ -18,3 +19,5 @@ New external providers must be introduced behind provider interfaces and reviewe
 DQ-006 supplies validation and approved-address results only. It does not fetch URLs, follow redirects, parse content, or provide an HTTP transport.
 
 DQ-007 stores only a reason code, canonical timestamp, and claimed human or system actor for a lead. It adds no contact details, notes, consent model, outreach, or sending behavior. Suppression and audit tables use database triggers against accidental update or deletion; this is not protection from a database administrator.
+
+DQ-011 validates discovery provenance again at the persistence boundary and treats malformed stored rows, schema failures, contention, and audit failures as generic persistence errors. Provider identities, references, business names, website URLs, SQL, and raw database causes are not exposed through those errors or copied into audit details. A persisted discovery website URL is storage-only and is not approved for network access; future connections must still pass DQ-006 validation. This capability performs no HTTP, DNS, provider access, crawling, or outreach.

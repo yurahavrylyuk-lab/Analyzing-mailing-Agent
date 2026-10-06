@@ -4,7 +4,7 @@ Delta Qoralis is planned as a human-controlled lead discovery, website analysis,
 
 ## Status
 
-The repository is at **Phase 0 — Foundation**. SQLite persistence, the BusinessLead lifecycle, append-only audit events, SSRF-safe network-target validation, and lead-specific do-not-contact protection exist. Discovery, crawling, analysis, qualification, contact discovery, outreach, AI, messaging, payments, deployment, dashboard, and workflows do not.
+The repository is in **Phase 1 — Lead Discovery**. Phase 0 is complete, DQ-010 established the provider-independent discovery contract, and DQ-011 is adding audited, idempotent persistence for accepted discovery candidates. No external provider, discovery runner, HTTP access, crawling, analysis, qualification, contact discovery, outreach, AI, messaging, payments, deployment, dashboard, or workflow is operational.
 
 ## Local setup
 
@@ -29,7 +29,7 @@ The local development database defaults to `DATABASE_URL=file:./data/delta-qoral
 
 ## Lead lifecycle
 
-The initial lead API records manually sourced businesses, retrieves them, manages recorded/reviewing/archived transitions, and stores website presence observations. Mutations use optimistic version checks; URL handling validates storage format only and performs no network requests.
+The lead API records manually sourced businesses and accepted provider-independent discovery candidates, retrieves them, manages recorded/reviewing/archived transitions, and stores website presence observations. Discovery provenance is explicit and repeated provider/reference identities return the stored lead without refreshing it. Mutations use optimistic version checks; URL handling validates storage format only and performs no network requests.
 
 Every actual lead mutation requires a claimed human or system actor and writes one allowlisted audit event in the same SQLite transaction. Audit history is ordered by its database ID and protected against updates and deletes. Audit details intentionally exclude business names, source references, and raw website URLs.
 

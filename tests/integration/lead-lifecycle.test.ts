@@ -6,6 +6,7 @@ import { test } from "node:test";
 
 import { applyMigrations, createDatabase, type Database } from "../../src/db";
 import { auditMigrations, type AuditActor } from "../../src/audit";
+import { complianceMigrations } from "../../src/compliance";
 import {
   ArchivedLeadWebsiteMutationError,
   InvalidLeadInputError,
@@ -13,6 +14,7 @@ import {
   LeadNotFoundError,
   LeadService,
   StaleLeadVersionError,
+  businessLeadsMigration,
   leadMigrations,
   type CreateLeadInput,
   type LeadServiceOptions,
@@ -48,7 +50,11 @@ function sequence<T>(values: readonly T[]): () => T {
 
 function createHarness(options: LeadServiceOptions = {}) {
   const database = createDatabase({ url: "file::memory:" });
-  applyMigrations(database, [...leadMigrations, ...auditMigrations]);
+  applyMigrations(database, [
+    ...leadMigrations,
+    ...auditMigrations,
+    ...complianceMigrations,
+  ]);
   const service = new LeadService(database, {
     idGenerator: options.idGenerator ?? sequence(ids),
     clock:
@@ -78,8 +84,8 @@ test("migration applies once and creates only the lead and migration tables", ()
 
   try {
     assert.deepEqual(tableNames(database), []);
-    assert.deepEqual(applyMigrations(database, leadMigrations), ["004-business-leads"]);
-    assert.deepEqual(applyMigrations(database, leadMigrations), []);
+    assert.deepEqual(applyMigrations(database, [businessLeadsMigration]), ["004-business-leads"]);
+    assert.deepEqual(applyMigrations(database, [businessLeadsMigration]), []);
     assert.deepEqual(tableNames(database), ["business_leads", "schema_migrations"]);
   } finally {
     database.close();
@@ -136,7 +142,7 @@ test("persists a lead across file-backed database reopen", () => {
 
   try {
     const firstDatabase = createDatabase({ url });
-    applyMigrations(firstDatabase, [...leadMigrations, ...auditMigrations]);
+    applyMigrations(firstDatabase, [...leadMigrations, ...auditMigrations, ...complianceMigrations]);
     const firstService = new LeadService(firstDatabase, {
       idGenerator: () => ids[0],
       clock: () => new Date("2026-01-01T00:00:00.000Z"),
@@ -146,7 +152,7 @@ test("persists a lead across file-backed database reopen", () => {
 
     const reopenedDatabase = createDatabase({ url });
     try {
-      applyMigrations(reopenedDatabase, [...leadMigrations, ...auditMigrations]);
+      applyMigrations(reopenedDatabase, [...leadMigrations, ...auditMigrations, ...complianceMigrations]);
       const reopenedService = new LeadService(reopenedDatabase);
       assert.deepEqual(reopenedService.getLead(created.id), created);
     } finally {
@@ -159,7 +165,7 @@ test("persists a lead across file-backed database reopen", () => {
 
 test("database constraints reject inconsistent website storage", () => {
   const database = createDatabase({ url: "file::memory:" });
-  applyMigrations(database, leadMigrations);
+  applyMigrations(database, [businessLeadsMigration]);
   const commonValues = [
     ids[0],
     "Business",

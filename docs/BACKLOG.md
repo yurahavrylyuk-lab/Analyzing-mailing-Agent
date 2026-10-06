@@ -2,7 +2,7 @@
 
 ## Current Status
 
-Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is current, with no active implementation item. DQ-010 — Discovery Domain and Provider Contract is completed, and DQ-011–015 remain planned.
+Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is current, with no active implementation item. DQ-010 — Discovery Domain and Provider Contract and DQ-011 — Audited Discovery Provenance and Idempotent Lead Creation are completed, while DQ-012–015 remain planned.
 
 ## P0 — Foundation
 
@@ -68,7 +68,7 @@ Define bounded search criteria, provider-independent normalized candidate outcom
 
 ### DQ-011 — Audited Discovery Provenance and Idempotent Lead Creation
 
-**Status: Planned**
+**Status: Completed**
 
 Persist discovered leads with source provenance, idempotency, and atomic audit history.
 

@@ -49,9 +49,9 @@ Feature modules depend on the database abstraction and must not import the SQLit
 
 ## Lead lifecycle flow
 
-Database-backed lifecycle service plus validated lead input and actor → internal audited lead unit of work → lead and audit repositories → one database transaction → `business_leads` plus `audit_events`.
+Database-backed lifecycle service plus validated manual or discovery lead input and actor → internal audited lead unit of work → lead and audit repositories → one database transaction → `business_leads` plus `audit_events`.
 
-The service owns lifecycle transitions, website-observation rules, URL storage validation, optimistic version checks, and the mapping from successful mutations to typed audit events. Its public constructor accepts the database, not a substitutable persistence unit, and internally constructs the unit of work that supplies both repositories with that database instance and transaction. An audit failure therefore rolls back its lead change. No-op and rejected operations produce no event. Database-backed repositories contain only persistence operations and do not import the SQLite driver. Discovery, qualification, crawling, and outreach remain separate future modules.
+The service owns lifecycle transitions, website-observation rules, URL storage validation, optimistic version checks, discovery provenance validation, and the mapping from successful mutations to typed audit events. Its public constructor accepts the database, not a substitutable persistence unit, and internally constructs the unit of work that supplies both repositories with that database instance and transaction. An audit failure therefore rolls back its lead change. No-op and rejected operations produce no event. Database-backed repositories contain only persistence operations and do not import the SQLite driver. Provider access, qualification, crawling, and outreach remain separate future modules.
 
 ## Discovery domain flow
 
@@ -59,7 +59,9 @@ Untrusted criteria → bounded criteria normalization → future provider adapte
 
 The discovery module owns a small provider-independent vocabulary. `maxResults` limits provider result slots examined rather than promising a number of accepted or persisted leads; accepted, rejected, invalid, and later duplicate slots all consume that budget. Each page preserves one allowlisted outcome per returned slot, is capped by its requested size of at most 20, and may carry an opaque bounded cursor. Provider identity remains stable across accepted candidates.
 
-Candidate normalization keeps only provider identity, opaque provider reference, business name, and an unknown-or-present website observation. It reuses lead website-storage validation, which performs no DNS lookup and does not approve a URL for connection. DQ-010 provides no provider adapter, network request, configuration, persistence, audit mutation, retry, pagination runner, or lead creation; those remain separately reviewed work.
+Candidate normalization keeps only provider identity, opaque provider reference, business name, and an unknown-or-present website observation. It reuses lead website-storage validation, which performs no DNS lookup and does not approve a URL for connection.
+
+DQ-011 adds the compatible leads-owned persistence boundary: validated provider/reference identity → lookup inside the audited transaction → insert-if-absent → existing `lead.created` event. Database uniqueness is authoritative. Rediscovery returns the stored winner without refreshing any lead, suppression, or audit state. Current-schema composition applies historical migrations 004, 005, and 007 before migration 011. Migration 011 rebuilds `business_leads` while retaining the exact dependent suppression rows and foreign-key protections; historical migration fixtures continue to exercise their original schemas explicitly. No provider is configured or invoked, and no pagination or network behavior exists yet.
 
 ## Audit flow
 

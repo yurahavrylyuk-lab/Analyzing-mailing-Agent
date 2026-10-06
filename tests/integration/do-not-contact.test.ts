@@ -22,6 +22,7 @@ import { applyMigrations, createDatabase, type Database, type Migration } from "
 import {
   LeadNotFoundError,
   LeadService,
+  businessLeadsMigration,
   leadMigrations,
   type BusinessLead,
 } from "../../src/leads";
@@ -54,6 +55,39 @@ function createLead(database: Database, id = leadId): BusinessLead {
   );
 }
 
+function createHistoricalLead(database: Database, id = leadId): void {
+  database.run(
+    `INSERT INTO business_leads (
+      id, business_name, source_kind, source_reference, status,
+      website_presence, website_url, created_at, updated_at, version
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      "Suppression Test Business",
+      "manual",
+      "manual-test",
+      "recorded",
+      "unknown",
+      null,
+      "2026-03-01T00:00:00.000Z",
+      "2026-03-01T00:00:00.000Z",
+      1,
+    ],
+  );
+  new DatabaseAuditRepository(database).append({
+    occurredAt: "2026-03-01T00:00:00.000Z",
+    eventType: "lead.created",
+    entityType: "business_lead",
+    entityId: id,
+    actor: { type: "system", id: "test-fixture" },
+    details: {
+      initialStatus: "recorded",
+      initialWebsitePresence: "unknown",
+      version: 1,
+    },
+  });
+}
+
 function service(database: Database, timestamp = "2026-03-01T00:00:01.000Z") {
   return new DoNotContactService(database, {
     clock: () => new Date(timestamp),
@@ -67,7 +101,7 @@ function eventCount(database: Database, id = leadId): number {
 test("migration 007 applies once and creates the exact suppression schema and triggers", () => {
   const database = createDatabase({ url: "file::memory:" });
   try {
-    applyMigrations(database, [...leadMigrations, ...auditMigrations]);
+    applyMigrations(database, [businessLeadsMigration, ...auditMigrations]);
     assert.deepEqual(applyMigrations(database, complianceMigrations), ["007-do-not-contact"]);
     assert.deepEqual(applyMigrations(database, complianceMigrations), []);
     assert.deepEqual(
@@ -92,12 +126,28 @@ test("migration 007 applies once and creates the exact suppression schema and tr
 test("migration 007 upgrades populated audit storage without changing rows or ID continuity", () => {
   const database = createDatabase({ url: "file::memory:" });
   try {
-    applyMigrations(database, [...leadMigrations, ...auditMigrations]);
-    const lead = createLead(database);
-    const leadService = new LeadService(database, {
-      clock: () => new Date("2026-03-01T00:00:01.000Z"),
+    applyMigrations(database, [businessLeadsMigration, ...auditMigrations]);
+    createHistoricalLead(database);
+    const lead = {
+      id: leadId,
+      version: 1,
+    };
+    database.run(
+      "UPDATE business_leads SET status = ?, updated_at = ?, version = ? WHERE id = ?",
+      ["reviewing", "2026-03-01T00:00:01.000Z", 2, lead.id],
+    );
+    new DatabaseAuditRepository(database).append({
+      occurredAt: "2026-03-01T00:00:01.000Z",
+      eventType: "lead.status_changed",
+      entityType: "business_lead",
+      entityId: lead.id,
+      actor,
+      details: {
+        previousStatus: "recorded",
+        newStatus: "reviewing",
+        version: 2,
+      },
     });
-    leadService.transitionLead(lead.id, "reviewing", lead.version, actor);
     const before = database.all<Record<string, unknown>>(
       "SELECT * FROM audit_events ORDER BY id",
     );
@@ -105,13 +155,24 @@ test("migration 007 upgrades populated audit storage without changing rows or ID
     applyMigrations(database, complianceMigrations);
     assert.deepEqual(database.all("SELECT * FROM audit_events ORDER BY id"), before);
 
-    const applied = service(database, "2026-03-01T00:00:02.000Z")
-      .applySuppression(lead.id, "manual", actor);
+    database.run(
+      `INSERT INTO lead_contact_suppressions (
+        lead_id, reason_code, applied_at, applied_by_type, applied_by_id
+      ) VALUES (?, ?, ?, ?, ?)`,
+      [lead.id, "manual", "2026-03-01T00:00:02.000Z", "human", "compliance-reviewer"],
+    );
+    new DatabaseAuditRepository(database).append({
+      occurredAt: "2026-03-01T00:00:02.000Z",
+      eventType: "lead.do_not_contact_applied",
+      entityType: "business_lead",
+      entityId: lead.id,
+      actor: { type: "human", id: "compliance-reviewer" },
+      details: { reasonCode: "manual" },
+    });
     const events = new DatabaseAuditRepository(database).listForEntity(
       "business_lead",
       lead.id,
     );
-    assert.equal(applied.changed, true);
     assert.deepEqual(events.map(({ id }) => id), [1, 2, 3]);
     assert.deepEqual(events[2]?.details, { reasonCode: "manual" });
   } finally {
@@ -152,8 +213,8 @@ test("migration preserves old restrictions, permits only the new event, and rest
 
 test("migration failure rolls back the audit rebuild and suppression table", () => {
   const database = createDatabase({ url: "file::memory:" });
-  applyMigrations(database, [...leadMigrations, ...auditMigrations]);
-  createLead(database);
+  applyMigrations(database, [businessLeadsMigration, ...auditMigrations]);
+  createHistoricalLead(database);
   const failingMigration: Migration = {
     id: doNotContactMigration.id,
     up(migrationDatabase) {
