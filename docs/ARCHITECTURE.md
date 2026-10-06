@@ -8,7 +8,7 @@ Delta Qoralis will be a modular TypeScript application. Configuration, domain lo
 - `core`: shared domain primitives and narrow cross-cutting contracts.
 - `db`: persistence interfaces and implementations.
 - `network-safety`: URL, address, DNS, and redirect validation for future outbound connections.
-- `discovery`: business-source discovery.
+- `discovery`: bounded search criteria, normalized candidate outcomes, page validation, and the provider-independent discovery contract.
 - `crawler`: safe website retrieval and crawl results.
 - `website-analysis`: analysis of crawler results.
 - `contacts`: future contact discovery and contact records.
@@ -52,6 +52,14 @@ Feature modules depend on the database abstraction and must not import the SQLit
 Database-backed lifecycle service plus validated lead input and actor → internal audited lead unit of work → lead and audit repositories → one database transaction → `business_leads` plus `audit_events`.
 
 The service owns lifecycle transitions, website-observation rules, URL storage validation, optimistic version checks, and the mapping from successful mutations to typed audit events. Its public constructor accepts the database, not a substitutable persistence unit, and internally constructs the unit of work that supplies both repositories with that database instance and transaction. An audit failure therefore rolls back its lead change. No-op and rejected operations produce no event. Database-backed repositories contain only persistence operations and do not import the SQLite driver. Discovery, qualification, crawling, and outreach remain separate future modules.
+
+## Discovery domain flow
+
+Untrusted criteria → bounded criteria normalization → future provider adapter → validated ordered page outcomes → future discovery orchestration.
+
+The discovery module owns a small provider-independent vocabulary. `maxResults` limits provider result slots examined rather than promising a number of accepted or persisted leads; accepted, rejected, invalid, and later duplicate slots all consume that budget. Each page preserves one allowlisted outcome per returned slot, is capped by its requested size of at most 20, and may carry an opaque bounded cursor. Provider identity remains stable across accepted candidates.
+
+Candidate normalization keeps only provider identity, opaque provider reference, business name, and an unknown-or-present website observation. It reuses lead website-storage validation, which performs no DNS lookup and does not approve a URL for connection. DQ-010 provides no provider adapter, network request, configuration, persistence, audit mutation, retry, pagination runner, or lead creation; those remain separately reviewed work.
 
 ## Audit flow
 

@@ -2,7 +2,7 @@
 
 ## Current Status
 
-Phase 0 — Foundation is completed, and no implementation item is currently active. Phase 1 — Lead Discovery is the next planned phase, but DQ-010–015 remain planned until each item is individually architected and approved for implementation.
+Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is current, with no active implementation item. DQ-010 — Discovery Domain and Provider Contract is completed, and DQ-011–015 remain planned.
 
 ## P0 — Foundation
 
@@ -56,15 +56,47 @@ Added one persistent, one-way suppression row per lead with `manual` or `request
 
 Established the feature-branch, pull-request, CI, reviewed-merge, and post-merge cleanup workflow used by the project. Substantial implementation work follows the Architect → Builder → Analyst sequence, with human approval before high-impact progression. This creates a repeatable development process in which changes are isolated, validated, reviewed, and merged without rewriting shared history.
 
-## P1 — Product Pipeline
+## P1 — Lead Discovery
+
+**Status: Current**
+
+### DQ-010 — Discovery Domain and Provider Contract
+
+**Status: Completed**
+
+Define bounded search criteria, provider-independent normalized candidate outcomes, page validation, and the asynchronous provider boundary. This task does not activate a provider, perform network access, or persist discovered leads.
+
+### DQ-011 — Audited Discovery Provenance and Idempotent Lead Creation
 
 **Status: Planned**
 
-The ranges below describe planned capability groups, not approved definitions for their individual DQ items. Each item must still be architected before implementation.
+Persist discovered leads with source provenance, idempotency, and atomic audit history.
 
-### DQ-010–015 — Lead Discovery
+### DQ-012 — First-provider Eligibility and Explicit Configuration
 
-Find candidate businesses through approved sources and normalize available business information into candidate leads while preserving source provenance. API-based providers such as Google Places may belong in this range, but direct Google Maps webpage scraping remains excluded. Deduplication, filtering, and provider-specific behavior must be defined when the individual items are architected. The expected output is candidate `BusinessLead` records ready for website investigation; discovery does not crawl or contact those businesses.
+**Status: Planned**
+
+Define explicit configuration and eligibility rules for the first approved provider.
+
+### DQ-013 — First Approved API Provider Adapter
+
+**Status: Planned**
+
+Implement the first approved API provider behind the discovery contract.
+
+### DQ-014 — Bounded Discovery Run and Persistence Orchestration
+
+**Status: Planned**
+
+Orchestrate bounded provider result processing and persistence.
+
+### DQ-015 — Controlled Discovery Command and Phase 1 Integration
+
+**Status: Planned**
+
+Expose the completed discovery flow through a controlled command and integrate Phase 1.
+
+## P2–P7 — Planned Product Pipeline
 
 ### DQ-020–024 — Website Crawling
 

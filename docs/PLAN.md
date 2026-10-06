@@ -47,7 +47,7 @@ Phase 0 established the technical and operational controls needed before buildin
 
 ## Phase 1 — Lead Discovery
 
-**Status: Planned**
+**Status: Current**
 
 **Tasks: DQ-010–015**
 
@@ -58,6 +58,17 @@ Phase 0 established the technical and operational controls needed before buildin
 **Expected outputs:** Traceable candidate `BusinessLead` records with preserved source provenance, ready to be handed to website investigation.
 
 **Important boundaries:** Discovery will use approved APIs or sources, will not scrape Google Maps pages directly, will not contact businesses, and will not crawl websites except through explicitly designed later phases. Provider behavior, normalization, filtering, and deduplication must be architected within the DQ-010–015 range before implementation.
+
+### Approved Sequence
+
+- **DQ-010 — Discovery Domain and Provider Contract (Completed):** Established bounded criteria, normalized candidate outcomes, page validation, and the provider-independent asynchronous contract.
+- **DQ-011 — Audited Discovery Provenance and Idempotent Lead Creation (Planned):** Add traceable, idempotent persistence for discovered leads.
+- **DQ-012 — First-provider Eligibility and Explicit Configuration (Planned):** Define which first provider may run and how its configuration is enabled explicitly.
+- **DQ-013 — First Approved API Provider Adapter (Planned):** Implement the approved provider behind the DQ-010 contract.
+- **DQ-014 — Bounded Discovery Run and Persistence Orchestration (Planned):** Coordinate bounded provider pages with persistence.
+- **DQ-015 — Controlled Discovery Command and Phase 1 Integration (Planned):** Add a controlled entry point and complete Phase 1 integration.
+
+No implementation item is currently active. DQ-011–015 remain planned and do not authorize provider activation, network access, or persistence work.
 
 ### Completion Outcome
 
@@ -153,10 +164,12 @@ These capabilities require new backlog items and are **not currently implemented
 
 Phase 0 — Foundation: Completed.
 
+Phase 1 — Lead Discovery: Current.
+
+DQ-010 — Discovery Domain and Provider Contract: Completed.
+
 No development item is currently active.
 
 ## Next Planned Step
 
-Phase 1 — Lead Discovery.
-
-The next action is to architect the first concrete work in the DQ-010–015 range before implementation begins.
+Architect DQ-011 — Audited Discovery Provenance and Idempotent Lead Creation and obtain implementation approval before work begins. DQ-011–015 have not started.
