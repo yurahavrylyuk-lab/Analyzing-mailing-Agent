@@ -62,13 +62,13 @@ Phase 0 established the technical and operational controls needed before buildin
 ### Approved Sequence
 
 - **DQ-010 — Discovery Domain and Provider Contract (Completed):** Established bounded criteria, normalized candidate outcomes, page validation, and the provider-independent asynchronous contract.
-- **DQ-011 — Audited Discovery Provenance and Idempotent Lead Creation (Planned):** Add traceable, idempotent persistence for discovered leads.
+- **DQ-011 — Audited Discovery Provenance and Idempotent Lead Creation (Completed):** Added traceable, idempotent persistence for discovered leads.
 - **DQ-012 — First-provider Eligibility and Explicit Configuration (Planned):** Define which first provider may run and how its configuration is enabled explicitly.
 - **DQ-013 — First Approved API Provider Adapter (Planned):** Implement the approved provider behind the DQ-010 contract.
 - **DQ-014 — Bounded Discovery Run and Persistence Orchestration (Planned):** Coordinate bounded provider pages with persistence.
 - **DQ-015 — Controlled Discovery Command and Phase 1 Integration (Planned):** Add a controlled entry point and complete Phase 1 integration.
 
-No implementation item is currently active. DQ-011–015 remain planned and do not authorize provider activation, network access, or persistence work.
+No implementation item is currently active. DQ-012–015 remain planned and do not authorize provider activation or network access.
 
 ### Completion Outcome
 
@@ -168,8 +168,10 @@ Phase 1 — Lead Discovery: Current.
 
 DQ-010 — Discovery Domain and Provider Contract: Completed.
 
+DQ-011 — Audited Discovery Provenance and Idempotent Lead Creation: Completed.
+
 No development item is currently active.
 
 ## Next Planned Step
 
-Architect DQ-011 — Audited Discovery Provenance and Idempotent Lead Creation and obtain implementation approval before work begins. DQ-011–015 have not started.
+Architect DQ-012 — First-provider Eligibility and Explicit Configuration and obtain implementation approval before work begins. DQ-012–015 have not started.

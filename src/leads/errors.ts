@@ -2,6 +2,22 @@ export class InvalidLeadInputError extends Error {
   readonly name = "InvalidLeadInputError";
 }
 
+export class InvalidDiscoveredLeadInputError extends Error {
+  readonly name = "InvalidDiscoveredLeadInputError";
+
+  constructor() {
+    super("Discovered lead input is invalid.");
+  }
+}
+
+export class LeadPersistenceError extends Error {
+  readonly name = "LeadPersistenceError";
+
+  constructor() {
+    super("Lead persistence operation failed.");
+  }
+}
+
 export class LeadNotFoundError extends Error {
   readonly name = "LeadNotFoundError";
 

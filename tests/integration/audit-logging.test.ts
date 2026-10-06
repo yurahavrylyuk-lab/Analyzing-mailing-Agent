@@ -13,6 +13,7 @@ import {
   type AuditRepository,
 } from "../../src/audit";
 import { applyMigrations, createDatabase, type Database } from "../../src/db";
+import { complianceMigrations } from "../../src/compliance";
 import {
   ArchivedLeadWebsiteMutationError,
   DatabaseLeadRepository,
@@ -36,7 +37,11 @@ const input: CreateLeadInput = {
 };
 
 function migrate(database: Database): void {
-  applyMigrations(database, [...leadMigrations, ...auditMigrations]);
+  applyMigrations(database, [
+    ...leadMigrations,
+    ...auditMigrations,
+    ...complianceMigrations,
+  ]);
 }
 
 function makeService(database: Database, id = leadId): LeadService {

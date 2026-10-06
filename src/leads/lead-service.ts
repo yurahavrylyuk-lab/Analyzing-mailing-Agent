@@ -4,6 +4,8 @@ import { normalizeAuditActor, type AuditActor } from "../audit";
 import type { Database } from "../db";
 import {
   createBusinessLead,
+  createDiscoveredBusinessLead,
+  normalizeRecordDiscoveredLeadInput,
   normalizeWebsiteObservation,
   toUtcIso,
   validateExpectedVersion,
@@ -12,10 +14,13 @@ import {
   type BusinessLead,
   type CreateLeadInput,
   type LeadStatus,
+  type RecordDiscoveredLeadInput,
+  type RecordDiscoveredLeadResult,
   type WebsiteObservation,
 } from "./domain";
 import {
   ArchivedLeadWebsiteMutationError,
+  LeadPersistenceError,
   LeadNotFoundError,
   StaleLeadVersionError,
 } from "./errors";
@@ -66,6 +71,58 @@ export class LeadService {
       });
     });
     return lead;
+  }
+
+  recordDiscoveredLead(
+    input: RecordDiscoveredLeadInput,
+    actor: AuditActor,
+  ): RecordDiscoveredLeadResult {
+    const normalizedInput = normalizeRecordDiscoveredLeadInput(input);
+    const normalizedActor = normalizeAuditActor(actor);
+
+    try {
+      return this.unitOfWork.transaction(({ leads, audits }) => {
+        const existing = leads.findByDiscoveryIdentity(
+          normalizedInput.provider,
+          normalizedInput.providerReference,
+        );
+        if (existing !== undefined) {
+          return Object.freeze({ lead: existing, created: false });
+        }
+
+        const candidate = createDiscoveredBusinessLead(
+          normalizedInput,
+          this.idGenerator(),
+          this.clock(),
+        );
+        if (!leads.insertDiscoveredIfAbsent(candidate)) {
+          const winner = leads.findByDiscoveryIdentity(
+            normalizedInput.provider,
+            normalizedInput.providerReference,
+          );
+          if (winner === undefined) {
+            throw new LeadPersistenceError();
+          }
+          return Object.freeze({ lead: winner, created: false });
+        }
+
+        audits.append({
+          occurredAt: candidate.createdAt,
+          eventType: "lead.created",
+          entityType: "business_lead",
+          entityId: candidate.id,
+          actor: normalizedActor,
+          details: {
+            initialStatus: candidate.status,
+            initialWebsitePresence: candidate.websiteObservation.presence,
+            version: candidate.version,
+          },
+        });
+        return Object.freeze({ lead: candidate, created: true });
+      });
+    } catch {
+      throw new LeadPersistenceError();
+    }
   }
 
   getLead(id: string): BusinessLead {
