@@ -37,9 +37,9 @@ The TypeScript project validates real application source and unit tests in stric
 
 ## Configuration flow
 
-External environment → config parser → validated readonly config → feature modules.
+External environment → config parser → validated deeply readonly config → feature modules.
 
-`src/config` is the only current module that reads `process.env`. Feature modules should consume its typed configuration instead of independently reading environment variables. The parser accepts an explicit environment object so it can be tested without changing the process environment.
+`src/config` is the only current module that reads `process.env`. Feature modules should consume its typed configuration instead of independently reading environment variables. The parser accepts an explicit environment object so it can be tested without changing the process environment. Discovery configuration is a frozen discriminator: `{ provider: "disabled" }` by default, or `{ provider: "geoapify", apiKey }` only after exact explicit selection and key validation. Unused keys do not activate a provider, and Google configuration is not parsed.
 
 ## Database flow
 
@@ -62,6 +62,8 @@ The discovery module owns a small provider-independent vocabulary. `maxResults` 
 Candidate normalization keeps only provider identity, opaque provider reference, business name, and an unknown-or-present website observation. It reuses lead website-storage validation, which performs no DNS lookup and does not approve a URL for connection.
 
 DQ-011 adds the compatible leads-owned persistence boundary: validated provider/reference identity → lookup inside the audited transaction → insert-if-absent → existing `lead.created` event. Database uniqueness is authoritative. Rediscovery returns the stored winner without refreshing any lead, suppression, or audit state. Current-schema composition applies historical migrations 004, 005, and 007 before migration 011. Migration 011 rebuilds `business_leads` while retaining the exact dependent suppression rows and foreign-key protections; historical migration fixtures continue to exercise their original schemas explicitly. No provider is configured or invoked, and no pagination or network behavior exists yet.
+
+DQ-012 selects Geoapify Places as the first eligible discovery provider and adds only disabled-by-default configuration. Parsing reads the supplied environment and performs no HTTP, DNS, file, database, provider construction, health check, or runner work. DQ-013 must separately design category/query mapping, location resolution and possible geocoding, stable external references, initial website-state handling, any Place Details use, auxiliary-call costs, credential-safe transport, and attribution in future visible output before implementing an adapter.
 
 ## Audit flow
 

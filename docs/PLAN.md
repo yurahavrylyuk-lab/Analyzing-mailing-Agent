@@ -63,12 +63,12 @@ Phase 0 established the technical and operational controls needed before buildin
 
 - **DQ-010 — Discovery Domain and Provider Contract (Completed):** Established bounded criteria, normalized candidate outcomes, page validation, and the provider-independent asynchronous contract.
 - **DQ-011 — Audited Discovery Provenance and Idempotent Lead Creation (Completed):** Added traceable, idempotent persistence for discovered leads.
-- **DQ-012 — First-provider Eligibility and Explicit Configuration (Planned):** Define which first provider may run and how its configuration is enabled explicitly.
+- **DQ-012 — First-provider Eligibility and Explicit Configuration (Completed):** Selected Geoapify Places and added disabled-by-default explicit configuration without implementing its adapter.
 - **DQ-013 — First Approved API Provider Adapter (Planned):** Implement the approved provider behind the DQ-010 contract.
 - **DQ-014 — Bounded Discovery Run and Persistence Orchestration (Planned):** Coordinate bounded provider pages with persistence.
 - **DQ-015 — Controlled Discovery Command and Phase 1 Integration (Planned):** Add a controlled entry point and complete Phase 1 integration.
 
-No implementation item is currently active. DQ-012–015 remain planned and do not authorize provider activation or network access.
+No implementation item is currently active. DQ-013–015 remain planned; completing DQ-012 authorizes configuration only, not provider activation, adapter behavior, or network access.
 
 ### Completion Outcome
 
@@ -170,8 +170,10 @@ DQ-010 — Discovery Domain and Provider Contract: Completed.
 
 DQ-011 — Audited Discovery Provenance and Idempotent Lead Creation: Completed.
 
+DQ-012 — First-provider Eligibility and Explicit Configuration: Completed.
+
 No development item is currently active.
 
 ## Next Planned Step
 
-Architect DQ-012 — First-provider Eligibility and Explicit Configuration and obtain implementation approval before work begins. DQ-012–015 have not started.
+Architect DQ-013 — First Approved API Provider Adapter and obtain implementation approval before work begins. DQ-013–015 have not started.

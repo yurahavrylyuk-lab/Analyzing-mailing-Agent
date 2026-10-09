@@ -1,3 +1,5 @@
+import { DiscoveryConfigurationError } from "./errors";
+
 export const APPLICATION_ENVIRONMENTS = [
   "development",
   "test",
@@ -10,6 +12,15 @@ export type ApplicationEnvironment = (typeof APPLICATION_ENVIRONMENTS)[number];
 export type LogLevel = (typeof LOG_LEVELS)[number];
 export type SQLiteDatabaseUrl = `file:${string}`;
 
+export type DiscoveryConfig =
+  | Readonly<{
+      provider: "disabled";
+    }>
+  | Readonly<{
+      provider: "geoapify";
+      apiKey: string;
+    }>;
+
 export type EnvironmentVariables = Readonly<Record<string, string | undefined>>;
 
 export interface AppConfig {
@@ -18,6 +29,7 @@ export interface AppConfig {
   readonly database: Readonly<{
     url: SQLiteDatabaseUrl;
   }>;
+  readonly discovery: DiscoveryConfig;
 }
 
 const defaultLogLevels: Readonly<Record<ApplicationEnvironment, LogLevel>> = {
@@ -77,9 +89,34 @@ function parseDatabaseUrl(
   return value as SQLiteDatabaseUrl;
 }
 
+const whitespaceOrControlCharacterPattern = /[\s\u0000-\u001f\u007f-\u009f]/u;
+
+function parseDiscoveryConfig(
+  environment: EnvironmentVariables,
+): DiscoveryConfig {
+  const provider = environment.DISCOVERY_PROVIDER;
+
+  if (provider === undefined || provider === "disabled") {
+    return Object.freeze({ provider: "disabled" });
+  }
+
+  if (provider !== "geoapify") {
+    throw new DiscoveryConfigurationError("INVALID_PROVIDER");
+  }
+
+  const apiKey = environment.GEOAPIFY_API_KEY;
+  if (apiKey === undefined) {
+    throw new DiscoveryConfigurationError("MISSING_GEOAPIFY_API_KEY");
+  }
+  if (apiKey.length === 0 || whitespaceOrControlCharacterPattern.test(apiKey)) {
+    throw new DiscoveryConfigurationError("INVALID_GEOAPIFY_API_KEY");
+  }
+
+  return Object.freeze({ provider: "geoapify", apiKey });
+}
+
 /**
- * Parses the application settings currently supported by the foundation.
- * Future provider settings stay optional until their owning feature enables them.
+ * Parses application settings without performing I/O or activating providers.
  */
 export function loadConfig(environment: EnvironmentVariables): AppConfig {
   const appEnvironment = parseEnum(
@@ -97,6 +134,12 @@ export function loadConfig(environment: EnvironmentVariables): AppConfig {
   const database = Object.freeze({
     url: parseDatabaseUrl(appEnvironment, environment.DATABASE_URL),
   });
+  const discovery = parseDiscoveryConfig(environment);
 
-  return Object.freeze({ environment: appEnvironment, logLevel, database });
+  return Object.freeze({
+    environment: appEnvironment,
+    logLevel,
+    database,
+    discovery,
+  });
 }
