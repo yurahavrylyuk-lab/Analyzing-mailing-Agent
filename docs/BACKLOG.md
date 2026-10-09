@@ -2,7 +2,7 @@
 
 ## Current Status
 
-Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is current, with no active implementation item. DQ-010 — Discovery Domain and Provider Contract and DQ-011 — Audited Discovery Provenance and Idempotent Lead Creation are completed, while DQ-012–015 remain planned.
+Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is current, with no active implementation item. DQ-010, DQ-011, and DQ-012 are completed, while DQ-013–015 remain planned.
 
 ## P0 — Foundation
 
@@ -74,9 +74,9 @@ Persist discovered leads with source provenance, idempotency, and atomic audit h
 
 ### DQ-012 — First-provider Eligibility and Explicit Configuration
 
-**Status: Planned**
+**Status: Completed**
 
-Define explicit configuration and eligibility rules for the first approved provider.
+Select Geoapify Places as the first eligible provider and add disabled-by-default, explicit, validated configuration without adding provider transport or requests.
 
 ### DQ-013 — First Approved API Provider Adapter
 

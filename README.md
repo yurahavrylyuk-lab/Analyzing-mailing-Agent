@@ -4,7 +4,7 @@ Delta Qoralis is planned as a human-controlled lead discovery, website analysis,
 
 ## Status
 
-The repository is in **Phase 1 — Lead Discovery**. Phase 0 is complete, DQ-010 established the provider-independent discovery contract, and DQ-011 is adding audited, idempotent persistence for accepted discovery candidates. No external provider, discovery runner, HTTP access, crawling, analysis, qualification, contact discovery, outreach, AI, messaging, payments, deployment, dashboard, or workflow is operational.
+The repository is in **Phase 1 — Lead Discovery**. Phase 0 is complete, DQ-010 established the provider-independent discovery contract, DQ-011 completed audited and idempotent persistence for accepted candidates, and DQ-012 selected Geoapify with explicit configuration. No provider adapter, discovery runner, provider request, HTTP access, crawling, analysis, qualification, contact discovery, outreach, AI, messaging, payments, deployment, dashboard, or workflow is operational.
 
 ## Local setup
 
@@ -19,9 +19,9 @@ The repository is in **Phase 1 — Lead Discovery**. Phase 0 is complete, DQ-010
 
 ## Configuration
 
-The application currently validates only `NODE_ENV` (`development`, `test`, or `production`) and `LOG_LEVEL` (`debug`, `info`, `warn`, or `error`). Defaults are development/debug, test/warn, and production/info.
+The application validates `NODE_ENV` (`development`, `test`, or `production`), `LOG_LEVEL` (`debug`, `info`, `warn`, or `error`), `DATABASE_URL`, and discovery selection. Defaults are development/debug, test/warn, production/info, and discovery disabled.
 
-[.env.example](.env.example) lists future provider variables as documentation only; they are optional and are not interpreted yet. `dotenv` is intentionally not installed: deployment environments and local commands can provide variables directly through `process.env`. Never commit a real `.env` file.
+Set `DISCOVERY_PROVIDER=geoapify` together with a nonblank, whitespace-free `GEOAPIFY_API_KEY` to make Geoapify available to a future adapter. A key by itself never activates discovery. `GOOGLE_PLACES_API_KEY` remains an unused and unapproved placeholder with no runtime effect; it cannot satisfy Geoapify configuration. DQ-012 performs configuration parsing only, so discovery still cannot make provider requests. `dotenv` is intentionally not installed: deployment environments and local commands can provide variables directly through `process.env`. Never commit a real `.env` file.
 
 ## Database
 
