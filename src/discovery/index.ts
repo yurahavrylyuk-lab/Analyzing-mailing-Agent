@@ -34,6 +34,14 @@ export type {
   DiscoveryProvider,
 } from "./provider";
 export {
+  DISCOVERY_PROVIDER_ERROR_MESSAGES,
+  DiscoveryProviderError,
   InvalidDiscoveryCriteriaError,
   MalformedDiscoveryResponseError,
 } from "./errors";
+export type {
+  DiscoveryProviderErrorCode,
+  MalformedDiscoveryResponseErrorCode,
+} from "./errors";
+export { createGeoapifyProvider } from "./providers/geoapify";
+export type { GeoapifyProviderOptions } from "./providers/geoapify";

@@ -2,7 +2,7 @@
 
 ## Current Status
 
-Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is current, with no active implementation item. DQ-010, DQ-011, and DQ-012 are completed, while DQ-013–015 remain planned.
+Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is current, with no active implementation item. DQ-010, DQ-011, DQ-012, and DQ-013 are completed; DQ-014 and DQ-015 remain planned.
 
 ## P0 — Foundation
 
@@ -80,9 +80,9 @@ Select Geoapify Places as the first eligible provider and add disabled-by-defaul
 
 ### DQ-013 — First Approved API Provider Adapter
 
-**Status: Planned**
+**Status: Completed**
 
-Implement the first approved API provider behind the discovery contract.
+Implement one bounded Geoapify provider behind the discovery contract. It supports four exact query mappings, city-scoped Places search, OSM-only identity, search-result website normalization, credential-safe fixed-endpoint transport, and an authenticated instance-local continuation cursor. It does not run multi-page discovery or persist results.
 
 ### DQ-014 — Bounded Discovery Run and Persistence Orchestration
 
