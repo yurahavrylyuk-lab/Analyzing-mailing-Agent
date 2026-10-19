@@ -29,8 +29,10 @@ The reviewed [Geoapify pricing page](https://www.geoapify.com/pricing/) lists Fr
 
 Geoapify's current Places examples authenticate with an `apiKey` request parameter. DQ-013 must use a documented authentication method and prevent credentials from reaching application logs, HTTP diagnostics, exceptions, traces, controllable reverse-proxy logs, or printed request URLs.
 
+Clarification reviewed on 2026-10-19: Geoapify's current official API specification also supports the `x-api-key` request header, which DQ-013 selects so the credential is absent from URLs and cursors. The current official Places response schema exposes the OpenStreetMap datasource identity and direct `website` property used by DQ-013. This clarification narrows transport and response-field use; it does not authorize other datasource fields, Place Details, or alternative website sources.
+
 ## Consequences
 
 Configuration parsing only reads the supplied environment. It performs no HTTP, DNS, file, or database access; creates no provider; and starts no runner or health check. There is no provider adapter or operational discovery pipeline in DQ-012.
 
-Before DQ-013 implementation, a separately reviewed design must resolve Geoapify category and query mapping, location resolution and possible geocoding, provider-reference stability, whether initial website state remains unknown, whether Place Details is justified, auxiliary API costs, credential-safe query-string transport, and attribution in future visible output.
+ADR 0008 records the separately reviewed DQ-013 adapter semantics. DQ-013 does not change the disabled-by-default configuration decision, implement operational orchestration, or add an attribution UI; future human-visible output must still show the approved attribution.

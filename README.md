@@ -4,7 +4,7 @@ Delta Qoralis is planned as a human-controlled lead discovery, website analysis,
 
 ## Status
 
-The repository is in **Phase 1 — Lead Discovery**. Phase 0 is complete, DQ-010 established the provider-independent discovery contract, DQ-011 completed audited and idempotent persistence for accepted candidates, and DQ-012 selected Geoapify with explicit configuration. No provider adapter, discovery runner, provider request, HTTP access, crawling, analysis, qualification, contact discovery, outreach, AI, messaging, payments, deployment, dashboard, or workflow is operational.
+The repository is in **Phase 1 — Lead Discovery**. Phase 0 is complete, DQ-010 established the provider-independent discovery contract, DQ-011 completed audited and idempotent persistence for accepted candidates, DQ-012 selected Geoapify with explicit configuration, and DQ-013 is implementing the first bounded provider adapter. The adapter can execute one explicitly invoked, offline-testable Geoapify page request, but no discovery runner, persistence orchestration, CLI, crawling, analysis, qualification, contact discovery, outreach, AI, messaging, payments, deployment, dashboard, or workflow is operational.
 
 ## Local setup
 
@@ -21,7 +21,11 @@ The repository is in **Phase 1 — Lead Discovery**. Phase 0 is complete, DQ-010
 
 The application validates `NODE_ENV` (`development`, `test`, or `production`), `LOG_LEVEL` (`debug`, `info`, `warn`, or `error`), `DATABASE_URL`, and discovery selection. Defaults are development/debug, test/warn, production/info, and discovery disabled.
 
-Set `DISCOVERY_PROVIDER=geoapify` together with a nonblank, whitespace-free `GEOAPIFY_API_KEY` to make Geoapify available to a future adapter. A key by itself never activates discovery. `GOOGLE_PLACES_API_KEY` remains an unused and unapproved placeholder with no runtime effect; it cannot satisfy Geoapify configuration. DQ-012 performs configuration parsing only, so discovery still cannot make provider requests. `dotenv` is intentionally not installed: deployment environments and local commands can provide variables directly through `process.env`. Never commit a real `.env` file.
+Set `DISCOVERY_PROVIDER=geoapify` together with a nonblank, whitespace-free `GEOAPIFY_API_KEY` to make Geoapify configuration eligible for explicit adapter construction. A key by itself never activates discovery or performs a request. `GOOGLE_PLACES_API_KEY` remains an unused and unapproved placeholder with no runtime effect; it cannot satisfy Geoapify configuration. `dotenv` is intentionally not installed: deployment environments and local commands can provide variables directly through `process.env`. Never commit a real `.env` file.
+
+## Geoapify discovery adapter
+
+DQ-013 provides one `DiscoveryProvider` for the exact application queries `bakery`, `bookshop`, `cafe`, and `restaurant`. A first page resolves one city and then performs one Places search bounded to that Geoapify place; a continuation uses its signed, instance-local cursor and performs only the Places request. The fixed Geoapify endpoints receive the credential only through `x-api-key`, reject redirects, use no retries, and enforce per-operation time and body limits. Results retain only OSM identity (`osm:n|w|r:<id>`), name, and the Places response's direct website field. This adapter does not run itself, persist leads, crawl returned websites, or implement DQ-014 orchestration.
 
 ## Database
 
