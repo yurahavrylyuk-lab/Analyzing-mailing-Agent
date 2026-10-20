@@ -10,7 +10,7 @@ Stored website URLs are business data, but using an untrusted URL as a network d
 
 ## Decision
 
-Keep storage validation and network-target validation separate. Network targets allow normalized HTTP(S) URLs on default ports, reject local names and non-public direct addresses, and resolve through an injected DNS boundary. Every A and AAAA answer must be valid and public; one unsafe answer rejects the entire target.
+Keep storage validation and network-target validation separate. Network targets allow normalized HTTP(S) URLs on default ports, reject local names and non-public direct addresses, and resolve through an injected DNS boundary. Every A and AAAA answer must be valid and public; one unsafe answer rejects the entire target. An address is public only when this classifier says so, and fec0::/10, 3fff::/20, 64:ff9b:1::/48, and 100:0:0:1::/64 are not public.
 
 Return the exact immutable approved addresses with the normalized URL, hostname, and port. A future transport must connect to one of those addresses while retaining the hostname for authority, TLS SNI, and certificate verification. Every redirect, including same-host and relative redirects, requires complete URL and DNS revalidation before use.
 

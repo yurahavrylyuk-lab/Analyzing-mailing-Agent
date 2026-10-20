@@ -8,7 +8,7 @@ The following are non-negotiable:
 - No force pushes and no committed secrets.
 - Without explicit human approval: no history rewriting, shared-branch deletion, CI bypassing, GitHub security-check disabling, repository visibility or ownership changes, production-secret changes, automatic pull-request merges, or production deployment credentials pushed to the repository.
 - No direct Google Maps webpage scraping.
-- Network targets allow only normalized HTTP(S) default-port URLs whose direct address or every DNS answer is public. Local names, unsafe addresses, mixed safe/unsafe DNS answers, and unsafe redirects fail closed.
+- Network targets allow only normalized HTTP(S) default-port URLs whose direct address or every DNS answer is public. The classifier treats fec0::/10, 3fff::/20, 64:ff9b:1::/48, and 100:0:0:1::/64 as non-public. Local names, unsafe addresses, mixed safe/unsafe DNS answers, and unsafe redirects fail closed.
 - The future crawler must disable automatic redirects, revalidate every redirect, cap redirect depth, and connect to an approved resolved address without a second DNS lookup.
 - Lead-specific do-not-contact suppression is insert-only, audited atomically, and checked through a fresh fail-closed guard before any future contact action.
 - Discovered lead identity is provider-specific and enforced by a case-sensitive partial unique index. Rediscovery never refreshes lead fields, clears suppression, or appends another creation event.
