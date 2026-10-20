@@ -29,4 +29,4 @@ Both requests use fixed HTTPS endpoints, GET, `URLSearchParams`, `Accept: applic
 
 ## Consequences
 
-DQ-013 supplies one explicitly constructed provider that can return a single normalized page. It does not enforce an overall run budget, follow its own cursor, deduplicate across pages, call `recordDiscoveredLead()`, write a database, produce a run summary, expose a CLI, or make discovery operational. DQ-014 and DQ-015 remain separately planned work.
+DQ-013 supplies one explicitly constructed provider that can return a single normalized page. It does not enforce an overall run budget, follow its own cursor, deduplicate across pages, call `recordDiscoveredLead()`, write a database, produce a run summary, expose a CLI, or make discovery operational. DQ-014 completed that bounded run separately. DQ-015 remains planned and has not started.
