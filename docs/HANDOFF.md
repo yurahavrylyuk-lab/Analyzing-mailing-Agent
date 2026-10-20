@@ -18,11 +18,11 @@ The Architect inspects the repository and designs only. The Builder implements o
 
 ## Current Project Position
 
-Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is current.
+Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is completed.
 
-Completed: DQ-010, DQ-011, DQ-012, DQ-013, and DQ-014.
+Completed: DQ-010, DQ-011, DQ-012, DQ-013, DQ-014, and DQ-015.
 
-Planned: DQ-015.
+Phase 2 — Website Crawling remains planned. DQ-020 has not started.
 
 No implementation item is currently active.
 
@@ -33,16 +33,15 @@ No implementation item is currently active.
 - **DQ-012** added explicit, disabled-by-default Geoapify configuration. A present API key does not activate discovery or perform a request.
 - **DQ-013** added a bounded Geoapify `DiscoveryProvider` for `bakery`, `bookshop`, `cafe`, and `restaurant`. The first page geocodes the city. Each `searchPage()` makes one Places request. A continuation uses the provider cursor. Accepted identity is an OSM `providerReference`. The credential travels in the `x-api-key` header. Endpoints are fixed and transport is bounded. The adapter does not retry and does not persist.
 - **DQ-014** added `runBoundedDiscovery()`. One injected provider serves the whole run. A valid page consumes one examined slot per normalized outcome before persistence. Accepted outcomes are recorded in order through `recordDiscoveredLead()`. Rejected outcomes are not persisted. The frozen summary reports slots separately from successful writes. The function does not construct a provider, read configuration, decode cursors, or retry.
+- **DQ-015** added `npm run discover`. It is the only operator entry that starts a discovery run. The command passes explicit criteria, one Geoapify provider, one human actor, and one `AbortSignal` into `runBoundedDiscovery()`. It does not reimplement paging or persistence.
 
 ## Current Discovery Pipeline
 
 The implemented path is:
 
-caller-supplied `DiscoveryProvider` → `runBoundedDiscovery()` → bounded `searchPage()` pages → validated outcomes consume the slot budget → accepted outcomes → `LeadService.recordDiscoveredLead()` → durable leads and a frozen run summary.
+`npm run discover` → `runDiscoveryCommand()` → `loadConfig()` → existing SQLite migrations and `LeadService` → `createGeoapifyProvider()` → `runBoundedDiscovery()` → bounded `searchPage()` pages → accepted outcomes → `LeadService.recordDiscoveredLead()` → text summary and exit code.
 
-The caller supplies one provider, the criteria, an explicit actor, and an `AbortSignal`. The runner does not construct a provider, read environment configuration, decode cursors, or retry. Configuration parsing remains separate and does not start a run.
-
-No CLI, HTTP route, scheduler, or other operator command exists. Nothing in the repository starts a live discovery run.
+The operator supplies `--location`, `--query`, `--actor`, and an optional `--max-results`. The runner still does not construct a provider, read environment configuration, decode cursors, or retry. There is no HTTP route, scheduler, or second command. A live run starts only when the operator invokes this command with discovery enabled.
 
 ## Important Existing Controls
 
@@ -57,7 +56,6 @@ No CLI, HTTP route, scheduler, or other operator command exists. Nothing in the 
 
 ## What Is Not Implemented Yet
 
-- A CLI or other controlled discovery command.
 - Website crawling.
 - Website analysis.
 - Qualification.
@@ -68,13 +66,13 @@ No CLI, HTTP route, scheduler, or other operator command exists. Nothing in the 
 
 ## Next Planned Task
 
-**DQ-015 — Controlled Discovery Command and Phase 1 Integration** is planned and has not started.
+**Phase 2 — Website Crawling** remains planned. DQ-020 has not started. No implementation item is active.
 
-DQ-014 is completed. Its callable function is `runBoundedDiscovery()`. DQ-015 owns the operator entry point and may call that function. It should not reimplement paging or persistence.
+DQ-015 is completed. Its operator command is `npm run discover`. It calls `runBoundedDiscovery()` and does not reimplement paging or persistence. Completing the command completed Phase 1. It did not start website crawling, contact discovery, or outreach.
 
 ## DQ-015 Boundary
 
-DQ-015 owns the controlled operator entry point, invocation UX, a CLI or command if one is selected, and final Phase 1 integration. DQ-014 does not implement those. No operator command is implemented.
+DQ-015 owns the one controlled operator command, its arguments, the explicit human actor, configuration loading, database open and close, one Geoapify provider, one `runBoundedDiscovery()` call, SIGINT cancellation, text output, attribution, and exit codes. It does not add retries, a scheduler, a run-history table, crawling, contacts, or outreach.
 
 ## Source of Truth
 

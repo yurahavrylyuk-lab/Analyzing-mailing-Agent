@@ -47,7 +47,7 @@ Phase 0 established the technical and operational controls needed before buildin
 
 ## Phase 1 — Lead Discovery
 
-**Status: Current**
+**Status: Completed**
 
 **Tasks: DQ-010–015**
 
@@ -66,13 +66,13 @@ Phase 0 established the technical and operational controls needed before buildin
 - **DQ-012 — First-provider Eligibility and Explicit Configuration (Completed):** Selected Geoapify Places and added disabled-by-default explicit configuration without implementing its adapter.
 - **DQ-013 — First Approved API Provider Adapter (Completed):** Implemented one bounded Geoapify page adapter with fixed transport, strict normalization, and instance-local continuation cursors.
 - **DQ-014 — Bounded Discovery Run and Persistence Orchestration (Completed):** Coordinate one injected provider across bounded pages and persist accepted outcomes through the existing lead boundary.
-- **DQ-015 — Controlled Discovery Command and Phase 1 Integration (Planned):** Add a controlled entry point and complete Phase 1 integration.
+- **DQ-015 — Controlled Discovery Command and Phase 1 Integration (Completed):** Added one operator command that loads approved configuration, opens the existing lead database, constructs one Geoapify provider, and calls `runBoundedDiscovery` once for an explicit human actor.
 
-No implementation item is currently active. DQ-015 controlled integration remains planned and has not started.
+No implementation item is currently active. Phase 2 — Website Crawling remains planned and has not started.
 
 ### Completion Outcome
 
-When Phase 1 is complete, the system should be able to turn approved search criteria into a reviewable set of persisted candidate leads with enough provenance to understand where every candidate came from.
+Phase 1 can turn approved search criteria into a reviewable set of persisted candidate leads with enough provenance to understand where every candidate came from. The controlled command is the only discovery entry. It does not crawl websites, discover contacts, or send outreach.
 
 ## Phase 2 — Website Crawling
 
@@ -164,7 +164,7 @@ These capabilities require new backlog items and are **not currently implemented
 
 Phase 0 — Foundation: Completed.
 
-Phase 1 — Lead Discovery: Current.
+Phase 1 — Lead Discovery: Completed.
 
 DQ-010 — Discovery Domain and Provider Contract: Completed.
 
@@ -176,6 +176,8 @@ DQ-013 — First Approved API Provider Adapter: Completed.
 
 DQ-014 — Bounded Discovery Run and Persistence Orchestration: Completed.
 
+DQ-015 — Controlled Discovery Command and Phase 1 Integration: Completed.
+
 ## Next Planned Step
 
-DQ-015 — Controlled Discovery Command and Phase 1 Integration is planned and has not started.
+Phase 2 — Website Crawling remains planned. DQ-020 has not started. No implementation item is active.

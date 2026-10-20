@@ -4,7 +4,7 @@ Delta Qoralis is planned as a human-controlled lead discovery, website analysis,
 
 ## Status
 
-The repository is in **Phase 1 — Lead Discovery**. Phase 0 is complete. DQ-010 established the provider-independent discovery contract, DQ-011 completed audited and idempotent persistence for accepted candidates, DQ-012 selected Geoapify with explicit configuration, DQ-013 completed the bounded Geoapify page adapter, and DQ-014 completed the bounded discovery run. `runBoundedDiscovery` accepts an injected provider and persists accepted outcomes through the existing lead boundary. No CLI or other operator command, crawling, analysis, qualification, contact discovery, outreach, AI, messaging, payments, deployment, dashboard, or workflow is operational.
+**Phase 1 — Lead Discovery** is complete. Phase 0 is complete. DQ-010 established the provider-independent discovery contract, DQ-011 completed audited and idempotent persistence for accepted candidates, DQ-012 selected Geoapify with explicit configuration, DQ-013 completed the bounded Geoapify page adapter, DQ-014 completed the bounded discovery run, and DQ-015 added the controlled discovery command. `npm run discover` is the only operator entry. It calls `runBoundedDiscovery` once and persists accepted outcomes through the existing lead boundary. Website crawling, analysis, qualification, contact discovery, outreach, AI, messaging, payments, deployment, dashboard, and workflow automation are not implemented. Phase 2 remains planned.
 
 ## Local setup
 
@@ -16,16 +16,24 @@ The repository is in **Phase 1 — Lead Discovery**. Phase 0 is complete. DQ-010
 
 - `npm test` — compiles and runs unit tests with Node's built-in test runner.
 - `npm run typecheck` — checks the TypeScript project without emitting files.
+- `npm run discover -- --location <location> --query <query> --actor <id> [--max-results <count>]` — runs one bounded Geoapify discovery.
+- `npm run discover -- --help` and `npm run discover -- -h` — print usage and exit 0.
 
 ## Configuration
 
 The application validates `NODE_ENV` (`development`, `test`, or `production`), `LOG_LEVEL` (`debug`, `info`, `warn`, or `error`), `DATABASE_URL`, and discovery selection. Defaults are development/debug, test/warn, production/info, and discovery disabled.
 
-Set `DISCOVERY_PROVIDER=geoapify` together with a nonblank, whitespace-free `GEOAPIFY_API_KEY` to make Geoapify configuration eligible for explicit adapter construction. A key by itself never activates discovery or performs a request. `GOOGLE_PLACES_API_KEY` remains an unused and unapproved placeholder with no runtime effect; it cannot satisfy Geoapify configuration. `dotenv` is intentionally not installed: deployment environments and local commands can provide variables directly through `process.env`. Never commit a real `.env` file.
+Set `DISCOVERY_PROVIDER=geoapify` together with a nonblank, whitespace-free `GEOAPIFY_API_KEY` to make Geoapify configuration eligible. A key by itself never activates discovery or performs a request. Discovery stays disabled unless both are set in the environment of `npm run discover`. The command does not read a `.env` file. `--actor` is the claimed human id for the audit row; it is not authentication and it is not printed. `--max-results` is the examined-slot budget from 1 through 60 and defaults to 20. `GOOGLE_PLACES_API_KEY` remains an unused and unapproved placeholder with no runtime effect; it cannot satisfy Geoapify configuration. `dotenv` is intentionally not installed: deployment environments and local commands can provide variables directly through `process.env`. Never commit a real `.env` file.
+
+Example:
+
+```text
+DISCOVERY_PROVIDER=geoapify GEOAPIFY_API_KEY=<key> npm run discover -- --location "Kyiv" --query cafe --actor ada
+```
 
 ## Geoapify discovery adapter
 
-DQ-013 provides one `DiscoveryProvider` for the exact application queries `bakery`, `bookshop`, `cafe`, and `restaurant`. A first page resolves one city and then performs one Places search bounded to that Geoapify place; a continuation uses its signed, instance-local cursor and performs only the Places request. The fixed Geoapify endpoints receive the credential only through `x-api-key`, reject redirects, use no retries, and enforce per-operation time and body limits. Results retain only OSM identity (`osm:n|w|r:<id>`), name, and the Places response's direct website field. This adapter does not run itself, persist leads, or crawl returned websites. DQ-014 orchestration is provider-generic and does not construct this adapter.
+DQ-013 provides one `DiscoveryProvider` for the exact application queries `bakery`, `bookshop`, `cafe`, and `restaurant`. A first page resolves one city and then performs one Places search bounded to that Geoapify place; a continuation uses its signed, instance-local cursor and performs only the Places request. The fixed Geoapify endpoints receive the credential only through `x-api-key`, reject redirects, use no retries, and enforce per-operation time and body limits. Results retain only OSM identity (`osm:n|w|r:<id>`), name, and the Places response's direct website field. This adapter does not run itself, persist leads, or crawl returned websites. DQ-014 orchestration is provider-generic and does not construct this adapter. DQ-015 constructs it from validated configuration and calls the runner once. Visible output includes `© OpenStreetMap contributors` and `Powered by Geoapify`.
 
 ## Database
 

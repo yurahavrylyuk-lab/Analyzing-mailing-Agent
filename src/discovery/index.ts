@@ -54,3 +54,16 @@ export type {
   DiscoveryRunStop,
   DiscoveryRunSummary,
 } from "./run";
+export {
+  DISCOVERY_ATTRIBUTION_LINES,
+  DISCOVERY_COMMAND_EXIT,
+  formatDiscoveryRunResult,
+  runDiscoveryCommand,
+} from "./command";
+export type {
+  DiscoveryCommandDatabase,
+  DiscoveryCommandDependencies,
+  DiscoveryCommandExitCode,
+  DiscoveryCommandRequest,
+  DiscoveryCommandResult,
+} from "./command";
