@@ -62,6 +62,24 @@ test("accepts, canonicalizes, and deduplicates public DNS results", async () => 
   assert.deepEqual(resolver.calls, ["example.com"]);
 });
 
+test("rejects a hostname whose only DNS answer is fec0::1", async () => {
+  const resolver = new FakeResolver([[{ address: "fec0::1", family: 6 }]]);
+  let target: Awaited<ReturnType<typeof resolveSafeTarget>> | undefined;
+
+  await assert.rejects(
+    async () => {
+      target = await resolveSafeTarget("https://example.com/", resolver);
+    },
+    (error: unknown) =>
+      error instanceof NetworkTargetError &&
+      error.code === "BLOCKED_ADDRESS" &&
+      !error.message.includes("fec0") &&
+      !error.message.includes("example.com"),
+  );
+  assert.equal(target, undefined);
+  assert.deepEqual(resolver.calls, ["example.com"]);
+});
+
 test("rejects private-only and mixed public/private DNS answers", async () => {
   for (const records of [
     [{ address: "10.1.2.3", family: 4 }],

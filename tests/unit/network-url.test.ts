@@ -138,6 +138,26 @@ test("rejects unsafe IPv6 and accepts representative public IP addresses", () =>
   );
 });
 
+test("rejects omitted non-public IPv6 prefixes and keeps adjacent public addresses", () => {
+  for (const address of ["fec0::1", "feff::1", "3fff::1", "64:ff9b:1::1", "100:0:0:1::1"]) {
+    assert.throws(
+      () => normalizeNetworkUrl(`http://[${address}]/`),
+      (error: unknown) =>
+        error instanceof NetworkTargetError &&
+        error.code === "BLOCKED_ADDRESS" &&
+        !error.message.includes(address),
+    );
+  }
+
+  assert.equal(normalizeNetworkUrl("http://93.184.216.34/"), "http://93.184.216.34/");
+  assert.equal(
+    normalizeNetworkUrl("https://[2606:4700:4700::1111]/dns-query"),
+    "https://[2606:4700:4700::1111]/dns-query",
+  );
+  assert.equal(normalizeNetworkUrl("http://[3fff:1000::1]/"), "http://[3fff:1000::1]/");
+  assert.equal(normalizeNetworkUrl("http://[64:ff9b:2::1]/"), "http://[64:ff9b:2::1]/");
+});
+
 test("network target errors never reflect URL data", () => {
   const secret = "do-not-reflect-this";
   assert.throws(
