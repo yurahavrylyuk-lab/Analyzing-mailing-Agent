@@ -4,7 +4,7 @@ Delta Qoralis is planned as a human-controlled lead discovery, website analysis,
 
 ## Status
 
-**Phase 1 — Lead Discovery** is complete. Phase 0 is complete. DQ-010 established the provider-independent discovery contract, DQ-011 completed audited and idempotent persistence for accepted candidates, DQ-012 selected Geoapify with explicit configuration, DQ-013 completed the bounded Geoapify page adapter, DQ-014 completed the bounded discovery run, and DQ-015 added the controlled discovery command. `npm run discover` is the only operator entry. It calls `runBoundedDiscovery` once and persists accepted outcomes through the existing lead boundary. Website crawling, analysis, qualification, contact discovery, outreach, AI, messaging, payments, deployment, dashboard, and workflow automation are not implemented. Phase 2 remains planned.
+**Phase 1 — Lead Discovery** is complete. Phase 0 is complete. Phase 2 — Website Crawling is current and is not completed. DQ-010 established the provider-independent discovery contract, DQ-011 completed audited and idempotent persistence for accepted candidates, DQ-012 selected Geoapify with explicit configuration, DQ-013 completed the bounded Geoapify page adapter, DQ-014 completed the bounded discovery run, and DQ-015 added the controlled discovery command. `npm run discover` is the only operator entry. It calls `runBoundedDiscovery` once and persists accepted outcomes through the existing lead boundary. DQ-020 added one offline-tested page fetch. Every connection goes through DQ-006, the socket is pinned, and redirects are revalidated. There is no crawl command, spider, analysis, contact extraction, outreach, or crawl persistence. Qualification, contact discovery, AI, messaging, payments, deployment, dashboard, and workflow automation are not implemented. DQ-021 through DQ-024 remain untitled and have not started.
 
 ## Local setup
 
@@ -47,7 +47,11 @@ Every actual lead mutation requires a claimed human or system actor and writes o
 
 ## Network target safety
 
-`src/network-safety` normalizes HTTP(S) targets, permits only default ports, blocks local hostnames and non-public IP addresses, validates every injected DNS answer, and returns the exact approved addresses for future connection pinning. Redirect targets receive the same complete validation. This module performs no HTTP requests and is separate from lead website URL storage validation.
+`src/network-safety` normalizes HTTP(S) targets, permits only default ports, blocks local hostnames and non-public IP addresses, validates every injected DNS answer, and returns the exact approved addresses for connection pinning. Redirect targets receive the same complete validation. This module performs no HTTP requests and is separate from lead website URL storage validation.
+
+## One-page crawl fetch
+
+`fetchCrawlPage` retrieves one HTML page. Every connection goes through DQ-006. The socket is pinned to the first approved address, and redirects are revalidated. The result is frozen in memory. There is no crawl command, spider, analysis, contact extraction, outreach, or crawl persistence. Tests for this fetch stay offline.
 
 ## Do-not-contact protection
 

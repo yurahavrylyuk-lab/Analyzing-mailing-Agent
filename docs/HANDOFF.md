@@ -18,11 +18,11 @@ The Architect inspects the repository and designs only. The Builder implements o
 
 ## Current Project Position
 
-Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is completed.
+Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is completed. Phase 2 — Website Crawling is current and is not completed.
 
-Completed: DQ-010, DQ-011, DQ-012, DQ-013, DQ-014, and DQ-015.
+Completed: DQ-010, DQ-011, DQ-012, DQ-013, DQ-014, DQ-015, and DQ-020.
 
-Phase 2 — Website Crawling remains planned. DQ-020 has not started.
+DQ-021, DQ-022, DQ-023, and DQ-024 remain untitled and have not started.
 
 No implementation item is currently active.
 
@@ -34,6 +34,7 @@ No implementation item is currently active.
 - **DQ-013** added a bounded Geoapify `DiscoveryProvider` for `bakery`, `bookshop`, `cafe`, and `restaurant`. The first page geocodes the city. Each `searchPage()` makes one Places request. A continuation uses the provider cursor. Accepted identity is an OSM `providerReference`. The credential travels in the `x-api-key` header. Endpoints are fixed and transport is bounded. The adapter does not retry and does not persist.
 - **DQ-014** added `runBoundedDiscovery()`. One injected provider serves the whole run. A valid page consumes one examined slot per normalized outcome before persistence. Accepted outcomes are recorded in order through `recordDiscoveredLead()`. Rejected outcomes are not persisted. The frozen summary reports slots separately from successful writes. The function does not construct a provider, read configuration, decode cursors, or retry.
 - **DQ-015** added `npm run discover`. It is the only operator entry that starts a discovery run. The command passes explicit criteria, one Geoapify provider, one human actor, and one `AbortSignal` into `runBoundedDiscovery()`. It does not reimplement paging or persistence.
+- **DQ-020** added `fetchCrawlPage`. One untrusted URL becomes one frozen HTML page. Every connection goes through DQ-006. The socket is pinned to the first approved address. Redirects are revalidated. There is no crawl command, spider, analysis, contact extraction, outreach, or crawl persistence.
 
 ## Current Discovery Pipeline
 
@@ -47,7 +48,7 @@ The operator supplies `--location`, `--query`, `--actor`, and an optional `--max
 
 - Append-only audit history, written in the same transaction as the lead mutation it records.
 - Idempotent discovery provenance. A repeated provider and provider reference returns the stored lead.
-- SSRF-safe validation for future website connection targets. The control prepares approved addresses and does not fetch websites.
+- SSRF-safe validation for website connection targets. DQ-006 prepares approved addresses and does not itself fetch websites. The one-page crawl fetch is the caller that connects, and every hop still goes through that validation.
 - One-way do-not-contact suppression, with a fail-closed contact guard.
 - Disabled-by-default discovery configuration.
 - Credential-safe Geoapify transport.
@@ -56,7 +57,7 @@ The operator supplies `--location`, `--query`, `--actor`, and an optional `--max
 
 ## What Is Not Implemented Yet
 
-- Website crawling.
+- Any crawl beyond one safe page fetch. There is no crawl command, spider, analysis, contact extraction, outreach, or crawl persistence.
 - Website analysis.
 - Qualification.
 - Contact discovery.
@@ -66,9 +67,13 @@ The operator supplies `--location`, `--query`, `--actor`, and an optional `--max
 
 ## Next Planned Task
 
-**Phase 2 — Website Crawling** remains planned. DQ-020 has not started. No implementation item is active.
+**Phase 2 — Website Crawling** is current and is not completed. DQ-020 — One-Page Pinned Crawl Fetch is completed. The next work is the rest of Phase 2, not a named DQ-021 scope. DQ-021 through DQ-024 remain untitled and have not started. No implementation item is active.
 
-DQ-015 is completed. Its operator command is `npm run discover`. It calls `runBoundedDiscovery()` and does not reimplement paging or persistence. Completing the command completed Phase 1. It did not start website crawling, contact discovery, or outreach.
+DQ-015 is completed. Its operator command is `npm run discover`. It calls `runBoundedDiscovery()` and does not reimplement paging or persistence. Completing the command completed Phase 1. That command does not fetch a page, discover contacts, or send outreach.
+
+## DQ-020 Boundary
+
+DQ-020 owns `fetchCrawlPage` in `src/crawler`. One untrusted URL and one `AbortSignal` produce one frozen HTML result. Every connection goes through DQ-006. The socket is pinned to that hop's first approved address. Redirects are revalidated. There is no crawl command, spider, analysis, contact extraction, outreach, or crawl persistence. DQ-021 through DQ-024 are not part of this task.
 
 ## DQ-015 Boundary
 
