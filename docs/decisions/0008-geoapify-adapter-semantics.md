@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted for DQ-013 implementation.
+Accepted and completed in DQ-013.
 
 ## Context
 
