@@ -4,7 +4,7 @@ Delta Qoralis is planned as a human-controlled lead discovery, website analysis,
 
 ## Status
 
-The repository is in **Phase 1 — Lead Discovery**. Phase 0 is complete, DQ-010 established the provider-independent discovery contract, DQ-011 completed audited and idempotent persistence for accepted candidates, DQ-012 selected Geoapify with explicit configuration, and DQ-013 is implementing the first bounded provider adapter. The adapter can execute one explicitly invoked, offline-testable Geoapify page request, but no discovery runner, persistence orchestration, CLI, crawling, analysis, qualification, contact discovery, outreach, AI, messaging, payments, deployment, dashboard, or workflow is operational.
+The repository is in **Phase 1 — Lead Discovery**. Phase 0 is complete, DQ-010 established the provider-independent discovery contract, DQ-011 completed audited and idempotent persistence for accepted candidates, DQ-012 selected Geoapify with explicit configuration, and DQ-013 is completed. The bounded Geoapify adapter exists and can execute one explicitly invoked, offline-testable page request. No discovery runner, persistence orchestration, CLI, crawling, analysis, qualification, contact discovery, outreach, AI, messaging, payments, deployment, dashboard, or workflow is operational.
 
 ## Local setup
 
@@ -49,9 +49,9 @@ Every actual lead mutation requires a claimed human or system actor and writes o
 
 Repository: <https://github.com/yurahavrylyuk-lab/Analyzing-mailing-Agent>
 
-Create task branch → implement → validate → commit → push → pull request → review → merge.
+Task architecture → implementation → validation → Analyst review → APPROVED → commit/push/PR → CI → human-approved merge → cleanup.
 
-Direct feature development on `main` is discouraged. Human approval is required before merging.
+`AGENTS.md` holds the detailed rules. Commit, push, and pull request follow Analyst approval. Human approval is required before merging. Work stays off `main`.
 
 ## Documentation
 

@@ -1,7 +1,7 @@
 {
   "name": "delta-qoralis-lead-discovery-outreach-agent",
   "version": "1.0.0",
-  "description": "Architecture foundation for Delta Qoralis.",
+  "description": "Human-controlled lead discovery and website-services automation platform for Delta Qoralis.",
   "private": true,
   "scripts": {
     "test": "node scripts/run-tests.cjs",
