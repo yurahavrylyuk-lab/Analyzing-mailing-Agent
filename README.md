@@ -4,7 +4,7 @@ Delta Qoralis is planned as a human-controlled lead discovery, website analysis,
 
 ## Status
 
-The repository is in **Phase 1 — Lead Discovery**. Phase 0 is complete, DQ-010 established the provider-independent discovery contract, DQ-011 completed audited and idempotent persistence for accepted candidates, DQ-012 selected Geoapify with explicit configuration, and DQ-013 is completed. The bounded Geoapify adapter exists and can execute one explicitly invoked, offline-testable page request. No discovery runner, persistence orchestration, CLI, crawling, analysis, qualification, contact discovery, outreach, AI, messaging, payments, deployment, dashboard, or workflow is operational.
+The repository is in **Phase 1 — Lead Discovery**. Phase 0 is complete. DQ-010 established the provider-independent discovery contract, DQ-011 completed audited and idempotent persistence for accepted candidates, DQ-012 selected Geoapify with explicit configuration, DQ-013 completed the bounded Geoapify page adapter, and DQ-014 completed the bounded discovery run. `runBoundedDiscovery` accepts an injected provider and persists accepted outcomes through the existing lead boundary. No CLI or other operator command, crawling, analysis, qualification, contact discovery, outreach, AI, messaging, payments, deployment, dashboard, or workflow is operational.
 
 ## Local setup
 
@@ -25,7 +25,7 @@ Set `DISCOVERY_PROVIDER=geoapify` together with a nonblank, whitespace-free `GEO
 
 ## Geoapify discovery adapter
 
-DQ-013 provides one `DiscoveryProvider` for the exact application queries `bakery`, `bookshop`, `cafe`, and `restaurant`. A first page resolves one city and then performs one Places search bounded to that Geoapify place; a continuation uses its signed, instance-local cursor and performs only the Places request. The fixed Geoapify endpoints receive the credential only through `x-api-key`, reject redirects, use no retries, and enforce per-operation time and body limits. Results retain only OSM identity (`osm:n|w|r:<id>`), name, and the Places response's direct website field. This adapter does not run itself, persist leads, crawl returned websites, or implement DQ-014 orchestration.
+DQ-013 provides one `DiscoveryProvider` for the exact application queries `bakery`, `bookshop`, `cafe`, and `restaurant`. A first page resolves one city and then performs one Places search bounded to that Geoapify place; a continuation uses its signed, instance-local cursor and performs only the Places request. The fixed Geoapify endpoints receive the credential only through `x-api-key`, reject redirects, use no retries, and enforce per-operation time and body limits. Results retain only OSM identity (`osm:n|w|r:<id>`), name, and the Places response's direct website field. This adapter does not run itself, persist leads, or crawl returned websites. DQ-014 orchestration is provider-generic and does not construct this adapter.
 
 ## Database
 

@@ -20,9 +20,9 @@ The Architect inspects the repository and designs only. The Builder implements o
 
 Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is current.
 
-Completed: DQ-010, DQ-011, DQ-012, and DQ-013.
+Completed: DQ-010, DQ-011, DQ-012, DQ-013, and DQ-014.
 
-Planned: DQ-014 and DQ-015.
+Planned: DQ-015.
 
 No implementation item is currently active.
 
@@ -32,16 +32,17 @@ No implementation item is currently active.
 - **DQ-011** added audited, idempotent persistence for accepted discovered leads through `LeadService.recordDiscoveredLead()`.
 - **DQ-012** added explicit, disabled-by-default Geoapify configuration. A present API key does not activate discovery or perform a request.
 - **DQ-013** added a bounded Geoapify `DiscoveryProvider` for `bakery`, `bookshop`, `cafe`, and `restaurant`. The first page geocodes the city. Each `searchPage()` makes one Places request. A continuation uses the provider cursor. Accepted identity is an OSM `providerReference`. The credential travels in the `x-api-key` header. Endpoints are fixed and transport is bounded. The adapter does not retry and does not persist.
+- **DQ-014** added `runBoundedDiscovery()`. One injected provider serves the whole run. A valid page consumes one examined slot per normalized outcome before persistence. Accepted outcomes are recorded in order through `recordDiscoveredLead()`. Rejected outcomes are not persisted. The frozen summary reports slots separately from successful writes. The function does not construct a provider, read configuration, decode cursors, or retry.
 
 ## Current Discovery Pipeline
 
 The implemented path is:
 
-config → the caller constructs the provider → `provider.searchPage()` → normalized accepted and rejected outcomes.
+caller-supplied `DiscoveryProvider` → `runBoundedDiscovery()` → bounded `searchPage()` pages → validated outcomes consume the slot budget → accepted outcomes → `LeadService.recordDiscoveredLead()` → durable leads and a frozen run summary.
 
-Persistence is a separate API: `LeadService.recordDiscoveredLead()`.
+The caller supplies one provider, the criteria, an explicit actor, and an `AbortSignal`. The runner does not construct a provider, read environment configuration, decode cursors, or retry. Configuration parsing remains separate and does not start a run.
 
-There is currently no module connecting `searchPage()` to `recordDiscoveredLead()`.
+No CLI, HTTP route, scheduler, or other operator command exists. Nothing in the repository starts a live discovery run.
 
 ## Important Existing Controls
 
@@ -56,8 +57,6 @@ There is currently no module connecting `searchPage()` to `recordDiscoveredLead(
 
 ## What Is Not Implemented Yet
 
-- A multi-page discovery run.
-- Automatic persistence orchestration.
 - A CLI or other controlled discovery command.
 - Website crawling.
 - Website analysis.
@@ -69,27 +68,13 @@ There is currently no module connecting `searchPage()` to `recordDiscoveredLead(
 
 ## Next Planned Task
 
-**DQ-014 — Bounded Discovery Run and Persistence Orchestration** is planned and has not started.
+**DQ-015 — Controlled Discovery Command and Phase 1 Integration** is planned and has not started.
 
-The conceptual goal is:
-
-`DiscoveryProvider` → bounded pages → ordered outcomes → accepted candidates → `recordDiscoveredLead()` → durable leads → a safe run summary.
-
-The DQ-014 Architect must still decide:
-
-- page scheduling
-- partial-progress and failure semantics
-- audit actor input
-- the run-summary contract
-- duplicate handling policy beyond DQ-011 idempotency
-- cancellation behavior
-- non-progressing pagination protection
-
-This document does not resolve those questions.
+DQ-014 is completed. Its callable function is `runBoundedDiscovery()`. DQ-015 owns the operator entry point and may call that function. It should not reimplement paging or persistence.
 
 ## DQ-015 Boundary
 
-DQ-015 owns the controlled operator entry point, invocation UX, a CLI or command if one is selected, and final Phase 1 integration. DQ-014 must not prematurely implement those.
+DQ-015 owns the controlled operator entry point, invocation UX, a CLI or command if one is selected, and final Phase 1 integration. DQ-014 does not implement those. No operator command is implemented.
 
 ## Source of Truth
 

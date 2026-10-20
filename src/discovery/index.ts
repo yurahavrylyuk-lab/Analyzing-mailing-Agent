@@ -45,3 +45,12 @@ export type {
 } from "./errors";
 export { createGeoapifyProvider } from "./providers/geoapify";
 export type { GeoapifyProviderOptions } from "./providers/geoapify";
+export { runBoundedDiscovery } from "./run";
+export type {
+  DiscoveryLeadRecorder,
+  DiscoveryPaginationBlockCode,
+  DiscoveryRunRequest,
+  DiscoveryRunResult,
+  DiscoveryRunStop,
+  DiscoveryRunSummary,
+} from "./run";

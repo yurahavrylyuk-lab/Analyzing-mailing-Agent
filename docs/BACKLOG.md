@@ -2,7 +2,7 @@
 
 ## Current Status
 
-Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is current, with no active implementation item. DQ-010, DQ-011, DQ-012, and DQ-013 are completed; DQ-014 and DQ-015 remain planned.
+Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is current, with no active implementation item. DQ-010, DQ-011, DQ-012, DQ-013, and DQ-014 are completed; DQ-015 remains planned and has not started.
 
 ## P0 — Foundation
 
@@ -86,15 +86,15 @@ Implement one bounded Geoapify provider behind the discovery contract. It suppor
 
 ### DQ-014 — Bounded Discovery Run and Persistence Orchestration
 
-**Status: Planned**
+**Status: Completed**
 
-Orchestrate bounded provider result processing and persistence.
+Run one injected discovery provider across bounded pages and persist accepted outcomes through `recordDiscoveredLead`. A valid page consumes one examined slot per normalized outcome before persistence. The frozen summary reports those slots separately from successful writes. Rejected outcomes are not persisted. The run does not construct a provider, read configuration, decode cursors, retry, or add a command.
 
 ### DQ-015 — Controlled Discovery Command and Phase 1 Integration
 
 **Status: Planned**
 
-Expose the completed discovery flow through a controlled command and integrate Phase 1.
+Expose the completed discovery flow through a controlled command and integrate Phase 1. This item has not started.
 
 ## P2–P7 — Planned Product Pipeline
 
