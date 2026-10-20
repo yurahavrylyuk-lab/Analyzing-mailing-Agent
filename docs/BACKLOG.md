@@ -2,7 +2,7 @@
 
 ## Current Status
 
-Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is completed. DQ-010, DQ-011, DQ-012, DQ-013, DQ-014, and DQ-015 are completed. No implementation item is active. Phase 2 — Website Crawling remains planned and has not started.
+Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is completed. DQ-010, DQ-011, DQ-012, DQ-013, DQ-014, and DQ-015 are completed. Phase 2 — Website Crawling is current and is not completed. DQ-020 — One-Page Pinned Crawl Fetch is completed. DQ-021, DQ-022, DQ-023, and DQ-024 remain untitled and have not started. No implementation item is active.
 
 ## P0 — Foundation
 
@@ -98,9 +98,15 @@ Expose the completed discovery flow through one controlled command, `npm run dis
 
 ## P2–P7 — Planned Product Pipeline
 
-### DQ-020–024 — Website Crawling
+### DQ-020 — One-Page Pinned Crawl Fetch
 
-Retrieve content from selected candidate websites using the network-target safety established by DQ-006. Crawling should use bounded HTTP behavior, manually validate redirects, enforce resource limits, and retain useful crawl evidence or content. The crawler gathers evidence but does not decide whether a business is qualified. The expected output is structured crawl results ready for website analysis.
+**Status: Completed**
+
+`DQ-020 — One-Page Pinned Crawl Fetch` is this architecture's decomposition of the grouped Phase 2 crawling work. It is not an old backlog title. One untrusted URL becomes one frozen HTML page. Every connection goes through DQ-006, the socket is pinned to the first approved address, and redirects are revalidated. The fetcher does not add a crawl command, a spider, analysis, contact extraction, outreach, or crawl persistence.
+
+DQ-021, DQ-022, DQ-023, and DQ-024 remain untitled and have not started.
+
+The remaining grouped crawling objective, still without titles for those later items, is unchanged: retrieve content from selected candidate websites using the network-target safety established by DQ-006. Crawling should use bounded HTTP behavior, manually validate redirects, enforce resource limits, and retain useful crawl evidence or content. The crawler gathers evidence but does not decide whether a business is qualified. The expected output is structured crawl results ready for website analysis.
 
 ### DQ-030–039 — Website Analysis
 

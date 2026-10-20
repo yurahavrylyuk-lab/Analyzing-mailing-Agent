@@ -68,7 +68,7 @@ Phase 0 established the technical and operational controls needed before buildin
 - **DQ-014 — Bounded Discovery Run and Persistence Orchestration (Completed):** Coordinate one injected provider across bounded pages and persist accepted outcomes through the existing lead boundary.
 - **DQ-015 — Controlled Discovery Command and Phase 1 Integration (Completed):** Added one operator command that loads approved configuration, opens the existing lead database, constructs one Geoapify provider, and calls `runBoundedDiscovery` once for an explicit human actor.
 
-No implementation item is currently active. Phase 2 — Website Crawling remains planned and has not started.
+Phase 1 is complete. Current phase status is recorded under Current Position.
 
 ### Completion Outcome
 
@@ -76,7 +76,7 @@ Phase 1 can turn approved search criteria into a reviewable set of persisted can
 
 ## Phase 2 — Website Crawling
 
-**Status: Planned**
+**Status: Current**
 
 **Tasks: DQ-020–024**
 
@@ -87,6 +87,14 @@ Phase 1 can turn approved search criteria into a reviewable set of persisted can
 **Expected output:** Bounded, structured crawl evidence that later analysis can inspect.
 
 **Important boundaries:** Crawling must enforce SSRF controls, manually validate redirects, connect only to approved targets, and apply explicit time, size, and resource limits. It gathers content and metadata but does not produce qualification conclusions.
+
+### DQ-020 — One-Page Pinned Crawl Fetch
+
+**Status: Completed**
+
+`DQ-020 — One-Page Pinned Crawl Fetch` is this architecture's decomposition of the grouped Phase 2 crawling work. It is not an old backlog title. It fetches one untrusted URL into one frozen HTML page. Every hop uses DQ-006. The socket is pinned to the first approved address. Redirects are revalidated. At most five redirects are followed, and an HTTPS-to-HTTP hop is refused. There is no crawl command, spider, analysis, contact extraction, outreach, or crawl persistence.
+
+DQ-021, DQ-022, DQ-023, and DQ-024 remain untitled and have not started. Phase 2 is not completed. No later implementation item is active.
 
 ## Phase 3 — Website Analysis
 
@@ -178,6 +186,12 @@ DQ-014 — Bounded Discovery Run and Persistence Orchestration: Completed.
 
 DQ-015 — Controlled Discovery Command and Phase 1 Integration: Completed.
 
+Phase 2 — Website Crawling: Current. Phase 2 is not completed.
+
+DQ-020 — One-Page Pinned Crawl Fetch: Completed.
+
+DQ-021, DQ-022, DQ-023, and DQ-024: untitled and not started.
+
 ## Next Planned Step
 
-Phase 2 — Website Crawling remains planned. DQ-020 has not started. No implementation item is active.
+Phase 2 — Website Crawling is current and is not completed. DQ-020 — One-Page Pinned Crawl Fetch is completed. DQ-021 through DQ-024 remain untitled and have not started. No implementation item is active.

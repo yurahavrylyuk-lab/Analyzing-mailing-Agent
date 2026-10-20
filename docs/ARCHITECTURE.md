@@ -7,9 +7,9 @@ Delta Qoralis will be a modular TypeScript application. Configuration, domain lo
 - `config`: validated application configuration, separated from business logic.
 - `core`: shared domain primitives and narrow cross-cutting contracts.
 - `db`: persistence interfaces and implementations.
-- `network-safety`: URL, address, DNS, and redirect validation for future outbound connections.
+- `network-safety`: URL, address, DNS, and redirect validation for outbound connections.
 - `discovery`: bounded search criteria, normalized candidate outcomes, page validation, the provider-independent discovery contract, and the bounded discovery run.
-- `crawler`: safe website retrieval and crawl results.
+- `crawler`: one pinned HTML page fetch. Later crawl tasks are not started.
 - `website-analysis`: analysis of crawler results.
 - `contacts`: future contact discovery and contact records.
 - `leads`: persisted lead lifecycle and its audited unit of work; qualification remains future work.
@@ -51,7 +51,7 @@ Feature modules depend on the database abstraction and must not import the SQLit
 
 Database-backed lifecycle service plus validated manual or discovery lead input and actor → internal audited lead unit of work → lead and audit repositories → one database transaction → `business_leads` plus `audit_events`.
 
-The service owns lifecycle transitions, website-observation rules, URL storage validation, optimistic version checks, discovery provenance validation, and the mapping from successful mutations to typed audit events. Its public constructor accepts the database, not a substitutable persistence unit, and internally constructs the unit of work that supplies both repositories with that database instance and transaction. An audit failure therefore rolls back its lead change. No-op and rejected operations produce no event. Database-backed repositories contain only persistence operations and do not import the SQLite driver. Provider access, qualification, crawling, and outreach remain separate future modules.
+The service owns lifecycle transitions, website-observation rules, URL storage validation, optimistic version checks, discovery provenance validation, and the mapping from successful mutations to typed audit events. Its public constructor accepts the database, not a substitutable persistence unit, and internally constructs the unit of work that supplies both repositories with that database instance and transaction. An audit failure therefore rolls back its lead change. No-op and rejected operations produce no event. Database-backed repositories contain only persistence operations and do not import the SQLite driver. Provider access, qualification, and outreach remain separate future modules. The one-page crawl fetch is a separate module and does not mutate leads.
 
 ## Discovery domain flow
 
@@ -79,7 +79,13 @@ Lead creation uses the resulting `createdAt`; status and website-observation cha
 
 Untrusted URL → HTTP(S) normalization and host policy → injected DNS resolver → validate every A/AAAA answer → immutable safe target containing the normalized URL, hostname, port, and approved addresses.
 
-Lead website storage validation remains separate and performs no DNS work. The future crawler must disable automatic redirects, validate every `Location` as a new target, cap redirects (for example, at five), and connect only to an address returned by the matching validation result. It must retain the hostname separately for HTTP authority, TLS SNI, and certificate verification instead of allowing the transport to resolve DNS again.
+Lead website storage validation remains separate and performs no DNS work. A stored website URL is not an approved connection target.
+
+## One-page crawl fetch
+
+`fetchCrawlPage` accepts one untrusted URL and one `AbortSignal`. The first hop calls `resolveSafeTarget`. Every later hop calls `resolveSafeRedirect`. Production uses `createNodeDnsResolver()` and connects with `node:http` on port 80 or `node:https` on port 443. The socket is pinned to the first approved address for that hop. The hostname is kept for the Host header, TLS SNI, and certificate checks. Automatic redirects stay off. The fetcher follows at most five 301, 302, 303, 307, and 308 responses after revalidation and refuses an HTTPS-to-HTTP hop. One 15-second deadline covers DNS, every hop, and the body. The body cap is 1,048,576 bytes. The final response must be identity-encoded UTF-8 `text/html` or `application/xhtml+xml`. Success returns one frozen `CrawlPageResult`.
+
+Every connection goes through DQ-006. The public entry does not accept a resolver, a transport, a pinned address, or a connect port. There is no crawl command, spider, analysis, contact extraction, outreach, or crawl persistence. Lead storage validation stays separate from this fetch.
 
 ## Do-not-contact flow
 
