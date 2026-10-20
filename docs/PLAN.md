@@ -65,10 +65,10 @@ Phase 0 established the technical and operational controls needed before buildin
 - **DQ-011 — Audited Discovery Provenance and Idempotent Lead Creation (Completed):** Added traceable, idempotent persistence for discovered leads.
 - **DQ-012 — First-provider Eligibility and Explicit Configuration (Completed):** Selected Geoapify Places and added disabled-by-default explicit configuration without implementing its adapter.
 - **DQ-013 — First Approved API Provider Adapter (Completed):** Implemented one bounded Geoapify page adapter with fixed transport, strict normalization, and instance-local continuation cursors.
-- **DQ-014 — Bounded Discovery Run and Persistence Orchestration (Planned):** Coordinate bounded provider pages with persistence.
+- **DQ-014 — Bounded Discovery Run and Persistence Orchestration (Completed):** Coordinate one injected provider across bounded pages and persist accepted outcomes through the existing lead boundary.
 - **DQ-015 — Controlled Discovery Command and Phase 1 Integration (Planned):** Add a controlled entry point and complete Phase 1 integration.
 
-No implementation item is currently active. DQ-014 multi-page and persistence orchestration and DQ-015 controlled integration remain planned.
+No implementation item is currently active. DQ-015 controlled integration remains planned and has not started.
 
 ### Completion Outcome
 
@@ -174,6 +174,8 @@ DQ-012 — First-provider Eligibility and Explicit Configuration: Completed.
 
 DQ-013 — First Approved API Provider Adapter: Completed.
 
+DQ-014 — Bounded Discovery Run and Persistence Orchestration: Completed.
+
 ## Next Planned Step
 
-Architect DQ-014 — Bounded Discovery Run and Persistence Orchestration and obtain implementation approval before work begins. DQ-014 and DQ-015 have not started.
+DQ-015 — Controlled Discovery Command and Phase 1 Integration is planned and has not started.

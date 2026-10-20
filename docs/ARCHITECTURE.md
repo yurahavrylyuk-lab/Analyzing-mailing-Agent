@@ -8,7 +8,7 @@ Delta Qoralis will be a modular TypeScript application. Configuration, domain lo
 - `core`: shared domain primitives and narrow cross-cutting contracts.
 - `db`: persistence interfaces and implementations.
 - `network-safety`: URL, address, DNS, and redirect validation for future outbound connections.
-- `discovery`: bounded search criteria, normalized candidate outcomes, page validation, and the provider-independent discovery contract.
+- `discovery`: bounded search criteria, normalized candidate outcomes, page validation, the provider-independent discovery contract, and the bounded discovery run.
 - `crawler`: safe website retrieval and crawl results.
 - `website-analysis`: analysis of crawler results.
 - `contacts`: future contact discovery and contact records.
@@ -55,7 +55,7 @@ The service owns lifecycle transitions, website-observation rules, URL storage v
 
 ## Discovery domain flow
 
-Untrusted criteria → bounded criteria normalization → explicitly invoked Geoapify page adapter → validated ordered page outcomes → future discovery orchestration.
+Untrusted criteria → bounded criteria normalization → injected provider pages → validated ordered page outcomes → bounded discovery run → accepted outcomes persisted through the lead service.
 
 The discovery module owns a small provider-independent vocabulary. `maxResults` limits provider result slots examined rather than promising a number of accepted or persisted leads; accepted, rejected, invalid, and later duplicate slots all consume that budget. Each page preserves one allowlisted outcome per returned slot, is capped by its requested size of at most 20, and may carry an opaque bounded cursor. Provider identity remains stable across accepted candidates.
 
@@ -66,6 +66,8 @@ DQ-011 adds the compatible leads-owned persistence boundary: validated provider/
 DQ-012 selects Geoapify Places as the first eligible discovery provider and adds disabled-by-default configuration. Parsing reads the supplied environment and performs no HTTP, DNS, file, database, provider construction, health check, or runner work.
 
 DQ-013 keeps its Geoapify implementation under `src/discovery/providers/geoapify`. The exact application tokens `bakery`, `bookshop`, `cafe`, and `restaurant` map to one Geoapify category each. A first page performs city geocoding followed by one Places request filtered with `place:<area-id>`; a continuation validates its adapter-instance HMAC cursor and performs only the Places request. OSM node, way, or relation identity becomes `osm:<type>:<positive-safe-integer>` with no fallback. Each raw feature remains one accepted or rejected outcome, and only `properties.name` and `properties.website` enter existing discovery normalization. The transport uses fixed HTTPS endpoints, `x-api-key`, manual redirects, one 15-second deadline per operation, and a 1 MiB decoded-body limit, with no retries or Place Details. DQ-013 does not supply a runner, multi-page budget, persistence coordination, or CLI.
+
+DQ-014 adds `runBoundedDiscovery` in `src/discovery/run.ts`. The caller injects one `DiscoveryProvider` for the whole run. Requested page size is the remaining slot budget capped at 20. A page that passes validation consumes one examined slot per normalized outcome before any persistence on that page. Accepted outcomes then go to `recordDiscoveredLead` in order with the explicit actor. Rejected outcomes are not persisted. The frozen result reports examined slots separately from successful writes. Opaque cursors are compared as exact strings. The runner does not construct a Geoapify provider, read the environment, decode cursors, open a run transaction, retry, or expose a command. DQ-015 remains planned and has not started.
 
 ## Audit flow
 
