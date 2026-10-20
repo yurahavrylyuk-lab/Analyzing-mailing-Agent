@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "test": "node scripts/run-tests.cjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "discover": "node scripts/run-discovery.cjs"
   },
   "keywords": [],
   "author": "",

@@ -2,7 +2,7 @@
 
 ## Current Status
 
-Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is current, with no active implementation item. DQ-010, DQ-011, DQ-012, DQ-013, and DQ-014 are completed; DQ-015 remains planned and has not started.
+Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is completed. DQ-010, DQ-011, DQ-012, DQ-013, DQ-014, and DQ-015 are completed. No implementation item is active. Phase 2 — Website Crawling remains planned and has not started.
 
 ## P0 — Foundation
 
@@ -58,7 +58,7 @@ Established the feature-branch, pull-request, CI, reviewed-merge, and post-merge
 
 ## P1 — Lead Discovery
 
-**Status: Current**
+**Status: Completed**
 
 ### DQ-010 — Discovery Domain and Provider Contract
 
@@ -92,9 +92,9 @@ Run one injected discovery provider across bounded pages and persist accepted ou
 
 ### DQ-015 — Controlled Discovery Command and Phase 1 Integration
 
-**Status: Planned**
+**Status: Completed**
 
-Expose the completed discovery flow through a controlled command and integrate Phase 1. This item has not started.
+Expose the completed discovery flow through one controlled command, `npm run discover`. The command parses location, query, an explicit human actor, and an optional examined-slot budget, then calls `runBoundedDiscovery` once with the Geoapify provider. It prints the run summary and the approved attribution lines. It does not crawl websites, discover contacts, or send outreach.
 
 ## P2–P7 — Planned Product Pipeline
 
