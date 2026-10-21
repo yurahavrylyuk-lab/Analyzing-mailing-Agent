@@ -2,7 +2,7 @@
 
 ## Current Status
 
-Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is completed. DQ-010, DQ-011, DQ-012, DQ-013, DQ-014, and DQ-015 are completed. Phase 2 — Website Crawling is current and is not completed. DQ-020 — One-Page Pinned Crawl Fetch is completed. DQ-021 — Lead-Linked Single-Page Crawl Evidence is completed. DQ-022 — Persisted Single-Page Crawl Evidence is completed. DQ-023 and DQ-024 remain untitled and have not started. Phase 3 — Website Analysis remains planned. No later implementation item is active.
+Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is completed. DQ-010, DQ-011, DQ-012, DQ-013, DQ-014, and DQ-015 are completed. Phase 2 — Website Crawling is current and is not completed. DQ-020 — One-Page Pinned Crawl Fetch is completed. DQ-021 — Lead-Linked Single-Page Crawl Evidence is completed. DQ-022 — Persisted Single-Page Crawl Evidence is completed. DQ-023 — Bounded Single-Page Crawl Run is completed. DQ-024 remains untitled and has not started. Phase 3 — Website Analysis remains planned. No later implementation item is active.
 
 ## P0 — Foundation
 
@@ -116,9 +116,15 @@ Expose the completed discovery flow through one controlled command, `npm run dis
 
 `DQ-022 — Persisted Single-Page Crawl Evidence` stores one already-built single-page attempt, fetched or failed, and reads it back by id. The table is append-only. HTML is untrusted stored data. A failure stores an allowlisted code and no raw error message. The current lead version and website URL do not rewrite the attempt. There is no lead selection, crawl command, spider, attempt list, audit event, or actor.
 
-DQ-023 and DQ-024 remain untitled and have not started.
+### DQ-023 — Bounded Single-Page Crawl Run
 
-The remaining grouped crawling objective, still without titles for those later items, is unchanged: retrieve content from selected candidate websites using the network-target safety established by DQ-006. Crawling should use bounded HTTP behavior, manually validate redirects, and enforce resource limits. One finished attempt can now be stored. Later Phase 2 work still owns lead selection and orchestration, and a controlled operator entry. The crawler gathers evidence but does not decide whether a business is qualified. The expected output is structured crawl results ready for website analysis.
+**Status: Completed**
+
+`DQ-023 — Bounded Single-Page Crawl Run` selects at most 60 eligible lead snapshots, crawls them one at a time, and persists each finished attempt immediately. Eligible leads are recorded or reviewing, with a present website, manual or discovered. Archived, unknown, and missing leads are excluded. Suppression is not a crawl gate. A finished attempt for the exact current URL blocks another automatic selection. `CANCELLED` does not. The result is five counters and a stop. There is no migration, index, crawl command, retry, actor, audit event, analysis, contact extraction, or outreach.
+
+DQ-024 remains untitled and has not started.
+
+The remaining grouped crawling objective keeps the same safety rules: retrieve content from selected candidate websites using the network-target safety established by DQ-006. Crawling uses bounded HTTP behavior, manually validated redirects, and resource limits. One bounded run can now select leads and store each finished attempt. Later Phase 2 work still owns a controlled operator entry. The crawler gathers evidence but does not decide whether a business is qualified. The expected output is structured crawl results ready for website analysis.
 
 ### DQ-030–039 — Website Analysis
 

@@ -106,7 +106,13 @@ Phase 1 can turn approved search criteria into a reviewable set of persisted can
 
 `DQ-022 — Persisted Single-Page Crawl Evidence` stores one already-built fetched or failed single-page attempt and reads that attempt back by id. The row is append-only history. `leadVersion` and the requested URL stay as they were on the evidence, even after the lead version or website URL changes. HTML is untrusted stored text. A failed attempt stores an allowlisted code and no raw error message. The lead row is not changed. There is no lead selection, crawl command, spider, list of attempts, audit event, actor, analysis, contact extraction, or outreach.
 
-DQ-023 and DQ-024 remain untitled and have not started. Phase 2 is not completed. Later Phase 2 work still owns lead selection and orchestration, and a controlled operator entry. No later implementation item is active.
+### DQ-023 — Bounded Single-Page Crawl Run
+
+**Status: Completed**
+
+`DQ-023 — Bounded Single-Page Crawl Run` selects at most 60 eligible `BusinessLead` snapshots in one read transaction, then crawls them one at a time. The read ends before collection. Eligible leads are `recorded` or `reviewing` with a present website URL, manual or discovered. Archived, unknown, and missing leads are excluded. Suppression is not consulted. A finished attempt for the exact current URL blocks another automatic selection. `CANCELLED` does not. Each returned attempt is persisted immediately. The run does not retry. The result is five counters and a stop. There is no migration, index, crawl command, actor, audit event, analysis, contact extraction, or outreach.
+
+DQ-024 remains untitled and has not started. Phase 2 is not completed. Later Phase 2 work still owns a controlled operator entry. No later implementation item is active.
 
 ## Phase 3 — Website Analysis
 
@@ -206,8 +212,10 @@ DQ-021 — Lead-Linked Single-Page Crawl Evidence: Completed.
 
 DQ-022 — Persisted Single-Page Crawl Evidence: Completed.
 
-DQ-023 and DQ-024: untitled and not started.
+DQ-023 — Bounded Single-Page Crawl Run: Completed.
+
+DQ-024: untitled and not started.
 
 ## Next Planned Step
 
-Phase 2 — Website Crawling is current and is not completed. DQ-020 — One-Page Pinned Crawl Fetch is completed. DQ-021 — Lead-Linked Single-Page Crawl Evidence is completed. DQ-022 — Persisted Single-Page Crawl Evidence is completed. DQ-023 and DQ-024 remain untitled and have not started. Later Phase 2 work still owns lead selection and orchestration, and a controlled operator entry. Phase 3 — Website Analysis remains planned. No later implementation item is active.
+Phase 2 — Website Crawling is current and is not completed. DQ-020 — One-Page Pinned Crawl Fetch is completed. DQ-021 — Lead-Linked Single-Page Crawl Evidence is completed. DQ-022 — Persisted Single-Page Crawl Evidence is completed. DQ-023 — Bounded Single-Page Crawl Run is completed. DQ-024 remains untitled and has not started. Later Phase 2 work still owns a controlled operator entry. Phase 3 — Website Analysis remains planned. No later implementation item is active.

@@ -101,6 +101,14 @@ Production always binds `fetchCrawlPage` and a clock that returns `new Date()`. 
 
 Migration `022-single-page-crawl-evidence` lives in `src/crawler/migration.ts` and is exported as `singlePageCrawlEvidenceMigration` and frozen `crawlerMigrations`. It verifies the current `business_leads` column order and foreign-key state before creating `single_page_crawl_evidence`. The discovery command's migration list remains the lead, audit, and compliance migrations. The service and repository depend on the database abstraction and do not import the SQLite driver. The repository is not on the public crawler entry. The write does not mutate the lead, write an audit event, or record an actor. Stored HTML stays untrusted text.
 
+## Bounded single-page crawl run
+
+`runBoundedSinglePageCrawl` selects at most `maxAttempts` eligible `BusinessLead` snapshots, from 1 through 60, then crawls them one at a time. Selection is one read transaction: the query returns ids, `DatabaseLeadRepository.findById` loads each id in that order, and the transaction ends before `collectSinglePageCrawlEvidence` runs. Each returned attempt is persisted immediately with one `SinglePageCrawlEvidenceService` created for that call. The run does not fetch except through DQ-021 and does not store except through DQ-022.
+
+Eligible leads are `recorded` or `reviewing`, with a present non-null website URL, whether manual or discovered. Archived, unknown, and missing leads are excluded. Suppression is not a crawl gate. A `fetched` row, or a `failed` row whose code is not `CANCELLED`, for that lead and the exact current URL blocks another automatic selection. `CANCELLED` alone does not. A later URL change can make the lead eligible again. The run does not retry.
+
+The caller supplies the `AbortSignal`. An already aborted signal selects nothing. Evidence that the collector already returned is persisted before the run stops. The frozen summary is five counters. `crawlerMigrations` is still only `022-single-page-crawl-evidence`. DQ-023 adds no migration and no index. There is no crawl command, actor, audit event, analysis, contact extraction, or outreach. DQ-024 remains untitled and unstarted.
+
 ## Do-not-contact flow
 
 Validated lead, reason, and actor → one database transaction → insert suppression if absent → append `lead.do_not_contact_applied` → commit. The service constructs its suppression, lead, and audit repositories from the same `Database`; an audit failure therefore rolls back a new suppression. A pre-existing suppression is an idempotent no-op that returns the original row and emits no event.
