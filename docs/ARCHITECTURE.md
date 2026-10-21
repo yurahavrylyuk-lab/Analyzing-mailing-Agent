@@ -9,7 +9,7 @@ Delta Qoralis will be a modular TypeScript application. Configuration, domain lo
 - `db`: persistence interfaces and implementations.
 - `network-safety`: URL, address, DNS, and redirect validation for outbound connections.
 - `discovery`: bounded search criteria, normalized candidate outcomes, page validation, the provider-independent discovery contract, and the bounded discovery run.
-- `crawler`: one pinned HTML page fetch and in-memory lead-linked single-page crawl evidence. Later crawl tasks are not started.
+- `crawler`: one pinned HTML page fetch, in-memory lead-linked single-page crawl evidence, and append-only persistence of one already-built attempt. Lead selection, a crawl command, and later crawl tasks are not started.
 - `website-analysis`: analysis of crawler results.
 - `contacts`: future contact discovery and contact records.
 - `leads`: persisted lead lifecycle and its audited unit of work; qualification remains future work.
@@ -45,7 +45,7 @@ External environment → config parser → validated deeply readonly config → 
 
 Validated configuration → database factory → database abstraction → SQLite adapter → migrations → repositories and domain services.
 
-Feature modules depend on the database abstraction and must not import the SQLite driver directly. Migrations currently own the `business_leads`, `audit_events`, and `lead_contact_suppressions` domain tables in addition to `schema_migrations`.
+Feature modules depend on the database abstraction and must not import the SQLite driver directly. Migrations currently own the `business_leads`, `audit_events`, `lead_contact_suppressions`, and `single_page_crawl_evidence` domain tables in addition to `schema_migrations`. `crawlerMigrations` is not applied by the discovery command. A caller that needs crawl evidence composes the lead, audit, compliance, and crawler migration lists explicitly.
 
 ## Lead lifecycle flow
 
@@ -85,7 +85,7 @@ Lead website storage validation remains separate and performs no DNS work. A sto
 
 `fetchCrawlPage` accepts one untrusted URL and one `AbortSignal`. The first hop calls `resolveSafeTarget`. Every later hop calls `resolveSafeRedirect`. Production uses `createNodeDnsResolver()` and connects with `node:http` on port 80 or `node:https` on port 443. The socket is pinned to the first approved address for that hop. The hostname is kept for the Host header, TLS SNI, and certificate checks. Automatic redirects stay off. The fetcher follows at most five 301, 302, 303, 307, and 308 responses after revalidation and refuses an HTTPS-to-HTTP hop. One 15-second deadline covers DNS, every hop, and the body. The body cap is 1,048,576 bytes. The final response must be identity-encoded UTF-8 `text/html` or `application/xhtml+xml`. Success returns one frozen `CrawlPageResult`.
 
-Every connection goes through DQ-006. The public entry does not accept a resolver, a transport, a pinned address, or a connect port. There is no crawl command, spider, analysis, contact extraction, outreach, or crawl persistence. Lead storage validation stays separate from this fetch. `fetch-page.ts` does not import `src/leads`.
+Every connection goes through DQ-006. The public entry does not accept a resolver, a transport, a pinned address, or a connect port. The fetch does not persist the page. There is no crawl command, spider, analysis, contact extraction, or outreach. Lead storage validation stays separate from this fetch. `fetch-page.ts` does not import `src/leads`.
 
 ## Lead-linked single-page crawl evidence
 
@@ -94,6 +94,12 @@ Every connection goes through DQ-006. The public entry does not accept a resolve
 A returned `CrawlPageResult` becomes frozen fetched evidence. `leadId` and `leadVersion` come from the caller snapshot. `leadVersion` is `BusinessLead.version`. `attemptedAt` is the ISO timestamp taken immediately before the fetch. A `NetworkTargetError` or `CrawlPageError` becomes frozen failed evidence with that code and no error message. Any other thrown value propagates. The evidence module does not re-validate the page result, persist evidence, write an audit event, or change the lead or its observation.
 
 Production always binds `fetchCrawlPage` and a clock that returns `new Date()`. The dependency seam stays on `collectSinglePageCrawlEvidenceWithDependencies` inside `src/crawler/single-page-evidence.ts`. `src/crawler/index.ts` does not export that seam. There is still no crawl command, spider, analysis, contact discovery, or outreach.
+
+## Persisted single-page crawl evidence
+
+`SinglePageCrawlEvidenceService` accepts a `Database` and persists one already-built `SinglePageCrawlEvidence`. It does not call `collectSinglePageCrawlEvidence` or `fetchCrawlPage`. `persist` validates outside the transaction, then in one transaction checks that the lead row exists, inserts one append-only row, and reads that row back by its new integer id. `findById` reads one primary-key row. A missing valid id is absence. There is no list, latest-attempt, or history query.
+
+Migration `022-single-page-crawl-evidence` lives in `src/crawler/migration.ts` and is exported as `singlePageCrawlEvidenceMigration` and frozen `crawlerMigrations`. It verifies the current `business_leads` column order and foreign-key state before creating `single_page_crawl_evidence`. The discovery command's migration list remains the lead, audit, and compliance migrations. The service and repository depend on the database abstraction and do not import the SQLite driver. The repository is not on the public crawler entry. The write does not mutate the lead, write an audit event, or record an actor. Stored HTML stays untrusted text.
 
 ## Do-not-contact flow
 

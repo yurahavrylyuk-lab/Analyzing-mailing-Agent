@@ -260,14 +260,19 @@ test("keeps the public crawler entry free of transport injection", () => {
   const crawler = require("../../src/crawler") as Record<string, unknown>;
   assert.deepEqual(Object.keys(crawler).sort(), [
     "CRAWL_EVIDENCE_ERROR_CODES",
+    "CRAWL_EVIDENCE_PERSISTENCE_ERROR_CODES",
     "CRAWL_PAGE_ERROR_CODES",
     "CRAWL_PAGE_TIMEOUT_MILLISECONDS",
     "CrawlEvidenceError",
+    "CrawlEvidencePersistenceError",
     "CrawlPageError",
     "MAX_CRAWL_BODY_BYTES",
     "MAX_CRAWL_REDIRECTS",
+    "SinglePageCrawlEvidenceService",
     "collectSinglePageCrawlEvidence",
+    "crawlerMigrations",
     "fetchCrawlPage",
+    "singlePageCrawlEvidenceMigration",
   ]);
   assert.equal(typeof fetchCrawlPage, "function");
   assert.equal(fetchCrawlPage.length, 2);
