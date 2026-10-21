@@ -2,7 +2,7 @@
 
 ## Current Status
 
-Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is completed. DQ-010, DQ-011, DQ-012, DQ-013, DQ-014, and DQ-015 are completed. Phase 2 — Website Crawling is current and is not completed. DQ-020 — One-Page Pinned Crawl Fetch is completed. DQ-021, DQ-022, DQ-023, and DQ-024 remain untitled and have not started. No implementation item is active.
+Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is completed. DQ-010, DQ-011, DQ-012, DQ-013, DQ-014, and DQ-015 are completed. Phase 2 — Website Crawling is current and is not completed. DQ-020 — One-Page Pinned Crawl Fetch is completed. DQ-021 — Lead-Linked Single-Page Crawl Evidence is completed. DQ-022, DQ-023, and DQ-024 remain untitled and have not started. Phase 3 — Website Analysis remains planned. No later implementation item is active.
 
 ## P0 — Foundation
 
@@ -104,9 +104,15 @@ Expose the completed discovery flow through one controlled command, `npm run dis
 
 `DQ-020 — One-Page Pinned Crawl Fetch` is this architecture's decomposition of the grouped Phase 2 crawling work. It is not an old backlog title. One untrusted URL becomes one frozen HTML page. Every connection goes through DQ-006, the socket is pinned to the first approved address, and redirects are revalidated. The fetcher does not add a crawl command, a spider, analysis, contact extraction, outreach, or crawl persistence.
 
-DQ-021, DQ-022, DQ-023, and DQ-024 remain untitled and have not started.
+### DQ-021 — Lead-Linked Single-Page Crawl Evidence
 
-The remaining grouped crawling objective, still without titles for those later items, is unchanged: retrieve content from selected candidate websites using the network-target safety established by DQ-006. Crawling should use bounded HTTP behavior, manually validate redirects, enforce resource limits, and retain useful crawl evidence or content. The crawler gathers evidence but does not decide whether a business is qualified. The expected output is structured crawl results ready for website analysis.
+**Status: Completed**
+
+`DQ-021 — Lead-Linked Single-Page Crawl Evidence` joins one caller-held `BusinessLead` to one `fetchCrawlPage` call. A present website observation is required. The stored URL is passed unchanged and remains untrusted. The result is one frozen in-memory evidence value: fetched HTML, or a failed attempt whose code is a known `NetworkTargetError` or `CrawlPageError` code. Other errors propagate. The lead, the observation, and the database stay unchanged. There is no crawl persistence, audit event, lead selection, batch, command, spider, analysis, contact discovery, or outreach.
+
+DQ-022, DQ-023, and DQ-024 remain untitled and have not started.
+
+The remaining grouped crawling objective, still without titles for those later items, is unchanged: retrieve content from selected candidate websites using the network-target safety established by DQ-006. Crawling should use bounded HTTP behavior, manually validate redirects, enforce resource limits, and retain useful crawl evidence or content. Later Phase 2 work still owns persistence, selection and orchestration, and a controlled operator entry. The crawler gathers evidence but does not decide whether a business is qualified. The expected output is structured crawl results ready for website analysis.
 
 ### DQ-030–039 — Website Analysis
 

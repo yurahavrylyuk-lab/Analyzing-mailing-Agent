@@ -259,11 +259,14 @@ test("publishes only the page-fetch constants and error codes", () => {
 test("keeps the public crawler entry free of transport injection", () => {
   const crawler = require("../../src/crawler") as Record<string, unknown>;
   assert.deepEqual(Object.keys(crawler).sort(), [
+    "CRAWL_EVIDENCE_ERROR_CODES",
     "CRAWL_PAGE_ERROR_CODES",
     "CRAWL_PAGE_TIMEOUT_MILLISECONDS",
+    "CrawlEvidenceError",
     "CrawlPageError",
     "MAX_CRAWL_BODY_BYTES",
     "MAX_CRAWL_REDIRECTS",
+    "collectSinglePageCrawlEvidence",
     "fetchCrawlPage",
   ]);
   assert.equal(typeof fetchCrawlPage, "function");
