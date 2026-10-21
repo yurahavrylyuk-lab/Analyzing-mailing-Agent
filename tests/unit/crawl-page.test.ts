@@ -266,12 +266,14 @@ test("keeps the public crawler entry free of transport injection", () => {
     "CrawlEvidenceError",
     "CrawlEvidencePersistenceError",
     "CrawlPageError",
+    "CrawlRunError",
     "MAX_CRAWL_BODY_BYTES",
     "MAX_CRAWL_REDIRECTS",
     "SinglePageCrawlEvidenceService",
     "collectSinglePageCrawlEvidence",
     "crawlerMigrations",
     "fetchCrawlPage",
+    "runBoundedSinglePageCrawl",
     "singlePageCrawlEvidenceMigration",
   ]);
   assert.equal(typeof fetchCrawlPage, "function");

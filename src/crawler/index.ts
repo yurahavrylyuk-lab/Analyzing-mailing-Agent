@@ -28,4 +28,11 @@ export type {
   StoredSinglePageCrawlEvidence,
 } from "./evidence-domain";
 export { SinglePageCrawlEvidenceService } from "./evidence-service";
+export { CrawlRunError, runBoundedSinglePageCrawl } from "./run";
+export type {
+  SinglePageCrawlRunRequest,
+  SinglePageCrawlRunResult,
+  SinglePageCrawlRunStop,
+  SinglePageCrawlRunSummary,
+} from "./run";
 export { crawlerMigrations, singlePageCrawlEvidenceMigration } from "./migration";
