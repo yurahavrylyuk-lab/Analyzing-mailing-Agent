@@ -20,6 +20,8 @@ DQ-006 supplies validation and approved-address results only. It does not fetch 
 
 DQ-020 fetches one HTML page through that validation. Each hop is approved again, then the socket is pinned to the first approved address. The fetcher does not add a second address list, a crawl command, a spider, analysis, contact extraction, outreach, or crawl persistence. A stored website URL is still untrusted until `fetchCrawlPage` revalidates it.
 
+DQ-021 calls `fetchCrawlPage` once for one caller-held lead whose website observation is present. The stored URL stays untrusted and is not treated as an approved target. Failure evidence stores a `NetworkTargetError` or `CrawlPageError` code and does not store the error message, response body, or network details. The contact guard is not consulted. The operation does not persist evidence, write an audit event, or change the lead.
+
 DQ-007 stores only a reason code, canonical timestamp, and claimed human or system actor for a lead. It adds no contact details, notes, consent model, outreach, or sending behavior. Suppression and audit tables use database triggers against accidental update or deletion; this is not protection from a database administrator.
 
 DQ-011 validates discovery provenance again at the persistence boundary and treats malformed stored rows, schema failures, contention, and audit failures as generic persistence errors. Provider identities, references, business names, website URLs, SQL, and raw database causes are not exposed through those errors or copied into audit details. A persisted discovery website URL is storage-only and is not approved for network access; future connections must still pass DQ-006 validation. This capability performs no HTTP, DNS, provider access, crawling, or outreach.
