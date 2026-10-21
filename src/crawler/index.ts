@@ -19,3 +19,13 @@ export type {
   FetchedCrawlEvidence,
   SinglePageCrawlEvidence,
 } from "./single-page-evidence";
+export {
+  CRAWL_EVIDENCE_PERSISTENCE_ERROR_CODES,
+  CrawlEvidencePersistenceError,
+} from "./evidence-domain";
+export type {
+  CrawlEvidencePersistenceErrorCode,
+  StoredSinglePageCrawlEvidence,
+} from "./evidence-domain";
+export { SinglePageCrawlEvidenceService } from "./evidence-service";
+export { crawlerMigrations, singlePageCrawlEvidenceMigration } from "./migration";

@@ -92,15 +92,21 @@ Phase 1 can turn approved search criteria into a reviewable set of persisted can
 
 **Status: Completed**
 
-`DQ-020 — One-Page Pinned Crawl Fetch` is this architecture's decomposition of the grouped Phase 2 crawling work. It is not an old backlog title. It fetches one untrusted URL into one frozen HTML page. Every hop uses DQ-006. The socket is pinned to the first approved address. Redirects are revalidated. At most five redirects are followed, and an HTTPS-to-HTTP hop is refused. There is no crawl command, spider, analysis, contact extraction, outreach, or crawl persistence.
+`DQ-020 — One-Page Pinned Crawl Fetch` is this architecture's decomposition of the grouped Phase 2 crawling work. It is not an old backlog title. It fetches one untrusted URL into one frozen HTML page. Every hop uses DQ-006. The socket is pinned to the first approved address. Redirects are revalidated. At most five redirects are followed, and an HTTPS-to-HTTP hop is refused. DQ-020 does not persist the page. There is no crawl command, spider, analysis, contact extraction, or outreach.
 
 ### DQ-021 — Lead-Linked Single-Page Crawl Evidence
 
 **Status: Completed**
 
-`DQ-021 — Lead-Linked Single-Page Crawl Evidence` is this architecture's decomposition of the next Phase 2 slice. One caller-held `BusinessLead` whose website observation is present becomes one frozen in-memory evidence value. The stored URL is passed unchanged to `fetchCrawlPage` once and remains untrusted. A returned page becomes fetched evidence. A `NetworkTargetError` or `CrawlPageError` becomes failed evidence with that code. Any other error propagates. `attemptedAt` records when the attempt began, and `leadVersion` is the caller snapshot's lead version. The lead and its observation stay unchanged. There is no persistence, audit event, selection, batch, command, spider, analysis, contact discovery, or outreach.
+`DQ-021 — Lead-Linked Single-Page Crawl Evidence` is this architecture's decomposition of the next Phase 2 slice. One caller-held `BusinessLead` whose website observation is present becomes one frozen in-memory evidence value. The stored URL is passed unchanged to `fetchCrawlPage` once and remains untrusted. A returned page becomes fetched evidence. A `NetworkTargetError` or `CrawlPageError` becomes failed evidence with that code. Any other error propagates. `attemptedAt` records when the attempt began, and `leadVersion` is the caller snapshot's lead version. The lead and its observation stay unchanged. DQ-021 does not persist, write an audit event, select leads, batch, add a command, spider, analyze, discover contacts, or send outreach.
 
-DQ-022, DQ-023, and DQ-024 remain untitled and have not started. Phase 2 is not completed. Later Phase 2 work still owns persistence, selection and orchestration, and a controlled operator entry. No later implementation item is active.
+### DQ-022 — Persisted Single-Page Crawl Evidence
+
+**Status: Completed**
+
+`DQ-022 — Persisted Single-Page Crawl Evidence` stores one already-built fetched or failed single-page attempt and reads that attempt back by id. The row is append-only history. `leadVersion` and the requested URL stay as they were on the evidence, even after the lead version or website URL changes. HTML is untrusted stored text. A failed attempt stores an allowlisted code and no raw error message. The lead row is not changed. There is no lead selection, crawl command, spider, list of attempts, audit event, actor, analysis, contact extraction, or outreach.
+
+DQ-023 and DQ-024 remain untitled and have not started. Phase 2 is not completed. Later Phase 2 work still owns lead selection and orchestration, and a controlled operator entry. No later implementation item is active.
 
 ## Phase 3 — Website Analysis
 
@@ -198,8 +204,10 @@ DQ-020 — One-Page Pinned Crawl Fetch: Completed.
 
 DQ-021 — Lead-Linked Single-Page Crawl Evidence: Completed.
 
-DQ-022, DQ-023, and DQ-024: untitled and not started.
+DQ-022 — Persisted Single-Page Crawl Evidence: Completed.
+
+DQ-023 and DQ-024: untitled and not started.
 
 ## Next Planned Step
 
-Phase 2 — Website Crawling is current and is not completed. DQ-020 — One-Page Pinned Crawl Fetch is completed. DQ-021 — Lead-Linked Single-Page Crawl Evidence is completed. DQ-022, DQ-023, and DQ-024 remain untitled and have not started. Later Phase 2 work still owns persistence, selection and orchestration, and a controlled operator entry. Phase 3 — Website Analysis remains planned. No later implementation item is active.
+Phase 2 — Website Crawling is current and is not completed. DQ-020 — One-Page Pinned Crawl Fetch is completed. DQ-021 — Lead-Linked Single-Page Crawl Evidence is completed. DQ-022 — Persisted Single-Page Crawl Evidence is completed. DQ-023 and DQ-024 remain untitled and have not started. Later Phase 2 work still owns lead selection and orchestration, and a controlled operator entry. Phase 3 — Website Analysis remains planned. No later implementation item is active.

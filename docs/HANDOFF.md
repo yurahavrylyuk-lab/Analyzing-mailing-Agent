@@ -20,9 +20,9 @@ The Architect inspects the repository and designs only. The Builder implements o
 
 Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is completed. Phase 2 — Website Crawling is current and is not completed.
 
-Completed: DQ-010, DQ-011, DQ-012, DQ-013, DQ-014, DQ-015, DQ-020, and DQ-021.
+Completed: DQ-010, DQ-011, DQ-012, DQ-013, DQ-014, DQ-015, DQ-020, DQ-021, and DQ-022.
 
-DQ-022, DQ-023, and DQ-024 remain untitled and have not started.
+DQ-023 and DQ-024 remain untitled and have not started.
 
 No implementation item is currently active.
 
@@ -34,8 +34,9 @@ No implementation item is currently active.
 - **DQ-013** added a bounded Geoapify `DiscoveryProvider` for `bakery`, `bookshop`, `cafe`, and `restaurant`. The first page geocodes the city. Each `searchPage()` makes one Places request. A continuation uses the provider cursor. Accepted identity is an OSM `providerReference`. The credential travels in the `x-api-key` header. Endpoints are fixed and transport is bounded. The adapter does not retry and does not persist.
 - **DQ-014** added `runBoundedDiscovery()`. One injected provider serves the whole run. A valid page consumes one examined slot per normalized outcome before persistence. Accepted outcomes are recorded in order through `recordDiscoveredLead()`. Rejected outcomes are not persisted. The frozen summary reports slots separately from successful writes. The function does not construct a provider, read configuration, decode cursors, or retry.
 - **DQ-015** added `npm run discover`. It is the only operator entry that starts a discovery run. The command passes explicit criteria, one Geoapify provider, one human actor, and one `AbortSignal` into `runBoundedDiscovery()`. It does not reimplement paging or persistence.
-- **DQ-020** added `fetchCrawlPage`. One untrusted URL becomes one frozen HTML page. Every connection goes through DQ-006. The socket is pinned to the first approved address. Redirects are revalidated. There is no crawl command, spider, analysis, contact extraction, outreach, or crawl persistence.
-- **DQ-021** added `collectSinglePageCrawlEvidence` in `src/crawler/single-page-evidence.ts`. One caller-held `BusinessLead` with a present website observation becomes one frozen in-memory evidence value through one `fetchCrawlPage` call. The stored URL is passed unchanged. Known network and crawl errors become failure codes. Other errors propagate. The lead is not mutated, and nothing is persisted.
+- **DQ-020** added `fetchCrawlPage`. One untrusted URL becomes one frozen HTML page. Every connection goes through DQ-006. The socket is pinned to the first approved address. Redirects are revalidated. DQ-020 does not store the page. There is no crawl command, spider, analysis, contact extraction, or outreach.
+- **DQ-021** added `collectSinglePageCrawlEvidence` in `src/crawler/single-page-evidence.ts`. One caller-held `BusinessLead` with a present website observation becomes one frozen in-memory evidence value through one `fetchCrawlPage` call. The stored URL is passed unchanged. Known network and crawl errors become failure codes. Other errors propagate. The lead is not mutated. Durable storage is DQ-022.
+- **DQ-022** added `SinglePageCrawlEvidenceService` and migration `022-single-page-crawl-evidence`. One already-built fetched or failed attempt becomes one append-only row and can be read by id. HTML is untrusted stored text. Failures store an allowlisted code and no raw error message. The lead is not mutated. There is no lead selection, crawl command, spider, attempt list, audit event, or actor.
 
 ## Current Discovery Pipeline
 
@@ -58,7 +59,7 @@ The operator supplies `--location`, `--query`, `--actor`, and an optional `--max
 
 ## What Is Not Implemented Yet
 
-- Crawl persistence, lead selection, a crawl command, a spider, website analysis, contact extraction, and outreach. One present lead website can become in-memory single-page crawl evidence. That evidence is not stored.
+- Lead selection, a crawl command, a spider, website analysis, contact extraction, and outreach. One present lead website can become in-memory single-page crawl evidence, and one already-built attempt can be stored and read by id. There is no attempt list.
 - Website analysis.
 - Qualification.
 - Contact discovery.
@@ -68,17 +69,21 @@ The operator supplies `--location`, `--query`, `--actor`, and an optional `--max
 
 ## Next Planned Task
 
-**Phase 2 — Website Crawling** is current and is not completed. DQ-020 — One-Page Pinned Crawl Fetch is completed. DQ-021 — Lead-Linked Single-Page Crawl Evidence is completed. The next work is the rest of Phase 2, not a named later scope. DQ-022, DQ-023, and DQ-024 remain untitled and have not started. Later Phase 2 work still owns persistence, selection and orchestration, and a controlled operator entry. Phase 3 — Website Analysis remains planned. No later implementation item is active.
+**Phase 2 — Website Crawling** is current and is not completed. DQ-020 — One-Page Pinned Crawl Fetch is completed. DQ-021 — Lead-Linked Single-Page Crawl Evidence is completed. DQ-022 — Persisted Single-Page Crawl Evidence is completed. The next work is the rest of Phase 2, not a named later scope. DQ-023 and DQ-024 remain untitled and have not started. Later Phase 2 work still owns lead selection and orchestration, and a controlled operator entry. Phase 3 — Website Analysis remains planned. No later implementation item is active.
 
 DQ-015 is completed. Its operator command is `npm run discover`. It calls `runBoundedDiscovery()` and does not reimplement paging or persistence. Completing the command completed Phase 1. That command does not fetch a page, discover contacts, or send outreach.
 
 ## DQ-020 Boundary
 
-DQ-020 owns `fetchCrawlPage` in `src/crawler`. One untrusted URL and one `AbortSignal` produce one frozen HTML result. Every connection goes through DQ-006. The socket is pinned to that hop's first approved address. Redirects are revalidated. There is no crawl command, spider, analysis, contact extraction, outreach, or crawl persistence. Lead linkage is DQ-021. DQ-022, DQ-023, and DQ-024 are not part of this task.
+DQ-020 owns `fetchCrawlPage` in `src/crawler`. One untrusted URL and one `AbortSignal` produce one frozen HTML result. Every connection goes through DQ-006. The socket is pinned to that hop's first approved address. Redirects are revalidated. There is no crawl command, spider, analysis, contact extraction, or outreach. Lead linkage is DQ-021. Persistence is DQ-022. DQ-023 and DQ-024 are not part of this task.
 
 ## DQ-021 Boundary
 
-DQ-021 owns `collectSinglePageCrawlEvidence` in `src/crawler/single-page-evidence.ts`. One caller-held `BusinessLead` with a present website observation and one `AbortSignal` produce one frozen in-memory `SinglePageCrawlEvidence` value. The stored URL is passed unchanged to `fetchCrawlPage` once. `NetworkTargetError` and `CrawlPageError` become failed evidence codes. Every other error propagates. `attemptedAt` is the start of that attempt. `leadVersion` is the caller snapshot's `BusinessLead.version`. The operation does not persist, audit, mutate the lead, select leads, or consult the contact guard. Tests inject a fetcher through `collectSinglePageCrawlEvidenceWithDependencies`, which `src/crawler/index.ts` does not export. DQ-022, DQ-023, and DQ-024 stay untitled and are not part of this task.
+DQ-021 owns `collectSinglePageCrawlEvidence` in `src/crawler/single-page-evidence.ts`. One caller-held `BusinessLead` with a present website observation and one `AbortSignal` produce one frozen in-memory `SinglePageCrawlEvidence` value. The stored URL is passed unchanged to `fetchCrawlPage` once. `NetworkTargetError` and `CrawlPageError` become failed evidence codes. Every other error propagates. `attemptedAt` is the start of that attempt. `leadVersion` is the caller snapshot's `BusinessLead.version`. The operation does not persist, audit, mutate the lead, select leads, or consult the contact guard. Tests inject a fetcher through `collectSinglePageCrawlEvidenceWithDependencies`, which `src/crawler/index.ts` does not export. Persistence is DQ-022. DQ-023 and DQ-024 stay untitled and are not part of this task.
+
+## DQ-022 Boundary
+
+DQ-022 owns `SinglePageCrawlEvidenceService` and migration `022-single-page-crawl-evidence`. One already-built fetched or failed `SinglePageCrawlEvidence` becomes one append-only `single_page_crawl_evidence` row when the lead exists. `persist` returns that stored attempt, including its integer id. `findById` reads one row. HTML is untrusted stored text. Failures store an allowlisted code and no raw error message. Historical `leadVersion` and `requestedUrl` are kept when the lead later changes. The service does not fetch, select leads, mutate the lead, write an audit event, record an actor, or consult the contact guard. `crawlerMigrations` is not applied by `npm run discover`. There is no attempt list, crawl command, spider, analysis, contact extraction, or outreach. DQ-023 and DQ-024 stay untitled and are not part of this task.
 
 ## DQ-015 Boundary
 

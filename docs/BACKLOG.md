@@ -2,7 +2,7 @@
 
 ## Current Status
 
-Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is completed. DQ-010, DQ-011, DQ-012, DQ-013, DQ-014, and DQ-015 are completed. Phase 2 — Website Crawling is current and is not completed. DQ-020 — One-Page Pinned Crawl Fetch is completed. DQ-021 — Lead-Linked Single-Page Crawl Evidence is completed. DQ-022, DQ-023, and DQ-024 remain untitled and have not started. Phase 3 — Website Analysis remains planned. No later implementation item is active.
+Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is completed. DQ-010, DQ-011, DQ-012, DQ-013, DQ-014, and DQ-015 are completed. Phase 2 — Website Crawling is current and is not completed. DQ-020 — One-Page Pinned Crawl Fetch is completed. DQ-021 — Lead-Linked Single-Page Crawl Evidence is completed. DQ-022 — Persisted Single-Page Crawl Evidence is completed. DQ-023 and DQ-024 remain untitled and have not started. Phase 3 — Website Analysis remains planned. No later implementation item is active.
 
 ## P0 — Foundation
 
@@ -108,11 +108,17 @@ Expose the completed discovery flow through one controlled command, `npm run dis
 
 **Status: Completed**
 
-`DQ-021 — Lead-Linked Single-Page Crawl Evidence` joins one caller-held `BusinessLead` to one `fetchCrawlPage` call. A present website observation is required. The stored URL is passed unchanged and remains untrusted. The result is one frozen in-memory evidence value: fetched HTML, or a failed attempt whose code is a known `NetworkTargetError` or `CrawlPageError` code. Other errors propagate. The lead, the observation, and the database stay unchanged. There is no crawl persistence, audit event, lead selection, batch, command, spider, analysis, contact discovery, or outreach.
+`DQ-021 — Lead-Linked Single-Page Crawl Evidence` joins one caller-held `BusinessLead` to one `fetchCrawlPage` call. A present website observation is required. The stored URL is passed unchanged and remains untrusted. The result is one frozen in-memory evidence value: fetched HTML, or a failed attempt whose code is a known `NetworkTargetError` or `CrawlPageError` code. Other errors propagate. The lead, the observation, and the database stay unchanged by DQ-021. DQ-021 does not select leads, batch, add a command, spider, analyze, discover contacts, or send outreach.
 
-DQ-022, DQ-023, and DQ-024 remain untitled and have not started.
+### DQ-022 — Persisted Single-Page Crawl Evidence
 
-The remaining grouped crawling objective, still without titles for those later items, is unchanged: retrieve content from selected candidate websites using the network-target safety established by DQ-006. Crawling should use bounded HTTP behavior, manually validate redirects, enforce resource limits, and retain useful crawl evidence or content. Later Phase 2 work still owns persistence, selection and orchestration, and a controlled operator entry. The crawler gathers evidence but does not decide whether a business is qualified. The expected output is structured crawl results ready for website analysis.
+**Status: Completed**
+
+`DQ-022 — Persisted Single-Page Crawl Evidence` stores one already-built single-page attempt, fetched or failed, and reads it back by id. The table is append-only. HTML is untrusted stored data. A failure stores an allowlisted code and no raw error message. The current lead version and website URL do not rewrite the attempt. There is no lead selection, crawl command, spider, attempt list, audit event, or actor.
+
+DQ-023 and DQ-024 remain untitled and have not started.
+
+The remaining grouped crawling objective, still without titles for those later items, is unchanged: retrieve content from selected candidate websites using the network-target safety established by DQ-006. Crawling should use bounded HTTP behavior, manually validate redirects, and enforce resource limits. One finished attempt can now be stored. Later Phase 2 work still owns lead selection and orchestration, and a controlled operator entry. The crawler gathers evidence but does not decide whether a business is qualified. The expected output is structured crawl results ready for website analysis.
 
 ### DQ-030–039 — Website Analysis
 
