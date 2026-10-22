@@ -10,11 +10,14 @@ import type { StoredSinglePageCrawlEvidence } from "../../src/crawler/evidence-d
 import {
   CrawlRunError,
   runBoundedSinglePageCrawl,
-  runBoundedSinglePageCrawlWithDependencies,
-  type SinglePageCrawlRunDependencies,
+  selectCandidates,
   type SinglePageCrawlRunRequest,
   type SinglePageCrawlRunResult,
 } from "../../src/crawler/run";
+import {
+  runBoundedSinglePageCrawlWithDependencies,
+  type SinglePageCrawlRunDependencies,
+} from "../../src/crawler/run-loop";
 import type {
   CrawlEvidenceFailureCode,
   FailedCrawlEvidence,
@@ -181,10 +184,8 @@ async function runWith(
   maxAttempts: number,
   dependencies: SinglePageCrawlRunDependencies,
   signal: AbortSignal = openSignal(),
-  database: Database = unusedDatabase(),
 ): Promise<SinglePageCrawlRunResult> {
   return runBoundedSinglePageCrawlWithDependencies(
-    database,
     request(maxAttempts, signal),
     dependencies,
   );
@@ -205,7 +206,6 @@ test("rejects an invalid budget or signal before selection", async () => {
     let selected = 0;
     await assert.rejects(
       () => runBoundedSinglePageCrawlWithDependencies(
-        unusedDatabase(),
         { maxAttempts: entry.maxAttempts, signal: entry.signal as AbortSignal },
         {
           select: () => {
@@ -620,34 +620,43 @@ test("hides selector sqlite failures and leaves programming errors visible", asy
   };
   await assert.rejects(
     () => runBoundedSinglePageCrawlWithDependencies(
-      selectorDatabase(() => {
-        throw new SqliteError();
-      }),
       request(1),
-      noWork,
+      {
+        ...noWork,
+        select: (maxAttempts) => selectCandidates(selectorDatabase(() => {
+          throw new SqliteError();
+        }), maxAttempts),
+      },
     ),
     (error: unknown) => assertSelectionFailed(error, ["secret-marker", "SELECT", "business_leads", "SQLITE"]),
   );
 
   await assert.rejects(
     () => runBoundedSinglePageCrawlWithDependencies(
-      selectorDatabase(
-        () => [{ id: ID_A }, { id: ID_B }],
-        () => {
-          throw new Error("findById called");
-        },
-      ),
       request(1),
-      noWork,
+      {
+        ...noWork,
+        select: (maxAttempts) => selectCandidates(selectorDatabase(
+          () => [{ id: ID_A }, { id: ID_B }],
+          () => {
+            throw new Error("findById called");
+          },
+        ), maxAttempts),
+      },
     ),
     (error: unknown) => assertSelectionFailed(error, ["findById"]),
   );
 
   await assert.rejects(
     () => runBoundedSinglePageCrawlWithDependencies(
-      selectorDatabase(() => [{ id: ID_A }], () => undefined),
       request(1),
-      noWork,
+      {
+        ...noWork,
+        select: (maxAttempts) => selectCandidates(
+          selectorDatabase(() => [{ id: ID_A }], () => undefined),
+          maxAttempts,
+        ),
+      },
     ),
     (error: unknown) => assertSelectionFailed(error, [ID_A, MARKER_URL]),
   );
@@ -655,11 +664,13 @@ test("hides selector sqlite failures and leaves programming errors visible", asy
   const programming = new TypeError("programming-marker");
   await assert.rejects(
     () => runBoundedSinglePageCrawlWithDependencies(
-      selectorDatabase(() => {
-        throw programming;
-      }),
       request(1),
-      noWork,
+      {
+        ...noWork,
+        select: (maxAttempts) => selectCandidates(selectorDatabase(() => {
+          throw programming;
+        }), maxAttempts),
+      },
     ),
     (error: unknown) => {
       assert.equal(error, programming);
@@ -672,24 +683,27 @@ test("hides selector sqlite failures and leaves programming errors visible", asy
 test("propagates a lead mapping failure from candidate loading", async () => {
   await assert.rejects(
     () => runBoundedSinglePageCrawlWithDependencies(
-      selectorDatabase(
-        () => [{ id: ID_A }],
-        () => ({
-          id: ID_A,
-          business_name: MARKER_NAME,
-          source_kind: "manual",
-          source_provider: null,
-          source_reference: "ref",
-          status: "recorded",
-          website_presence: "present",
-          website_url: "https://user:pass@example.com/secret",
-          created_at: "2026-01-01T00:00:00.000Z",
-          updated_at: "2026-01-01T00:00:00.000Z",
-          version: 1,
-        }),
-      ),
       request(1),
       {
+        select: (maxAttempts) => selectCandidates(
+          selectorDatabase(
+            () => [{ id: ID_A }],
+            () => ({
+              id: ID_A,
+              business_name: MARKER_NAME,
+              source_kind: "manual",
+              source_provider: null,
+              source_reference: "ref",
+              status: "recorded",
+              website_presence: "present",
+              website_url: "https://user:pass@example.com/secret",
+              created_at: "2026-01-01T00:00:00.000Z",
+              updated_at: "2026-01-01T00:00:00.000Z",
+              version: 1,
+            }),
+          ),
+          maxAttempts,
+        ),
         collect: async () => {
           throw new Error("collect called");
         },
@@ -730,6 +744,80 @@ test("production entry cancels before touching the database when the signal is a
   assertInvariants(result, 2);
 });
 
+test("awaits an async select once before collection", async () => {
+  let selected = 0;
+  let collects = 0;
+  const result = await runWith(2, {
+    select: async (maxAttempts) => {
+      selected += 1;
+      assert.equal(maxAttempts, 2);
+      assert.equal(collects, 0);
+      await Promise.resolve();
+      return [snapshot(ID_A)];
+    },
+    collect: async (lead) => {
+      collects += 1;
+      assert.equal(selected, 1);
+      return fetched(lead);
+    },
+    persist: (evidence) => stored(evidence),
+  });
+  assert.equal(selected, 1);
+  assert.equal(collects, 1);
+  assert.equal(result.summary.selected, 1);
+  assert.equal(result.summary.attempted, 1);
+  assert.equal(result.summary.persisted, 1);
+  assert.deepEqual(result.stop, { status: "completed", reason: "candidates_exhausted" });
+  assertInvariants(result, 2);
+});
+
+test("awaits persist before collecting the next candidate", async () => {
+  const order: string[] = [];
+  const result = await runWith(2, {
+    select: async () => {
+      order.push("select");
+      return [snapshot(ID_A), snapshot(ID_B)];
+    },
+    collect: async (lead) => {
+      order.push(`collect:${lead.id}`);
+      return fetched(lead);
+    },
+    persist: async (evidence) => {
+      order.push(`persist:${evidence.leadId}`);
+      await Promise.resolve();
+      order.push(`persisted:${evidence.leadId}`);
+      return stored(evidence);
+    },
+  });
+  assert.deepEqual(order, [
+    "select",
+    `collect:${ID_A}`,
+    `persist:${ID_A}`,
+    `persisted:${ID_A}`,
+    `collect:${ID_B}`,
+    `persist:${ID_B}`,
+    `persisted:${ID_B}`,
+  ]);
+  assert.equal(result.summary.attempted, 2);
+  assert.equal(result.summary.persisted, 2);
+  assert.deepEqual(result.stop, { status: "completed", reason: "budget_exhausted" });
+  assertInvariants(result, 2);
+});
+
+test("accepts synchronous select and persist callbacks", async () => {
+  const result = await runWith(1, {
+    select: () => [snapshot(ID_A)],
+    collect: async (lead) => failed(lead, "TIMEOUT"),
+    persist: (evidence) => stored(evidence),
+  });
+  assert.equal(result.summary.selected, 1);
+  assert.equal(result.summary.failed, 1);
+  assert.equal(result.summary.fetched, 0);
+  assert.equal(result.summary.persisted, 1);
+  assert.deepEqual(result.stop, { status: "completed", reason: "budget_exhausted" });
+  assertInvariants(result, 1);
+});
+
 test("keeps the dependency seam off the public crawler entry", () => {
   const crawler = require("../../src/crawler") as Record<string, unknown>;
   assert.equal(typeof crawler.runBoundedSinglePageCrawl, "function");
@@ -744,14 +832,24 @@ test("keeps the dependency seam off the public crawler entry", () => {
   assert.match(index, /\brunBoundedSinglePageCrawl\b/);
   assert.match(index, /\bCrawlRunError\b/);
 
+  const loop = readFileSync(join(process.cwd(), "src/crawler/run-loop.ts"), "utf8");
+  assert.match(loop, /export async function runBoundedSinglePageCrawlWithDependencies/);
+  assert.equal(loop.includes("selectCandidates"), false);
+  for (const token of ["Database", "better-sqlite3", "fetchCrawlPage", "D1", "miniflare"]) {
+    assert.equal(loop.includes(token), false, token);
+  }
+
   const source = readFileSync(join(process.cwd(), "src/crawler/run.ts"), "utf8");
-  assert.match(source, /export async function runBoundedSinglePageCrawlWithDependencies/);
+  assert.equal(source.includes("export async function runBoundedSinglePageCrawlWithDependencies"), false);
+  assert.match(source, /export function selectCandidates/);
   assert.match(source, /function selectCandidates/);
-  assert.equal(source.includes("export function selectCandidates"), false);
   assert.equal(source.includes("LIMIT ?"), true);
   assert.equal(source.includes("LIMIT ${"), false);
-  assert.equal(source.includes("outcome = 'fetched'"), true);
-  assert.equal(source.includes("failure_code <> 'CANCELLED'"), true);
+  assert.equal(source.includes("outcome = 'fetched'"), false);
+  assert.equal(source.includes("failure_code <> 'CANCELLED'"), false);
+  const filter = readFileSync(join(process.cwd(), "src/crawler/candidate-filter.ts"), "utf8");
+  assert.equal(filter.includes("outcome = 'fetched'"), true);
+  assert.equal(filter.includes("failure_code <> 'CANCELLED'"), true);
   for (const token of [
     "../compliance",
     "../discovery",

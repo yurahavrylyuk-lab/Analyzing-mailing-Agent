@@ -23,13 +23,28 @@ interface EvidenceRow {
   readonly failure_code: unknown;
 }
 
-const selectSql = `
+export const EVIDENCE_SELECT_BY_ID_SQL = `
   SELECT id, lead_id, lead_version, outcome, requested_url, attempted_at,
          final_url, status_code, content_type, body_text, byte_length,
          redirect_count, failure_code
   FROM single_page_crawl_evidence
   WHERE id = ?
 `;
+
+export const EVIDENCE_INSERT_SQL = `INSERT INTO single_page_crawl_evidence (
+          lead_id,
+          lead_version,
+          outcome,
+          requested_url,
+          attempted_at,
+          final_url,
+          status_code,
+          content_type,
+          body_text,
+          byte_length,
+          redirect_count,
+          failure_code
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
 function isSqliteError(error: unknown): boolean {
   return typeof error === "object" && error !== null && "name" in error && error.name === "SqliteError";
@@ -64,7 +79,7 @@ function requireStoredId(value: unknown): number {
   persistenceFailed();
 }
 
-function evidenceFromRow(row: EvidenceRow): StoredSinglePageCrawlEvidence {
+export function evidenceFromRow(row: EvidenceRow): StoredSinglePageCrawlEvidence {
   const id = requireStoredId(row.id);
 
   if (row.outcome === "fetched") {
@@ -123,7 +138,7 @@ function evidenceFromRow(row: EvidenceRow): StoredSinglePageCrawlEvidence {
   persistenceFailed();
 }
 
-function insertParameters(evidence: SinglePageCrawlEvidence): readonly [
+export function evidenceInsertParameters(evidence: SinglePageCrawlEvidence): readonly [
   string,
   number,
   string,
@@ -185,21 +200,8 @@ export class DatabaseCrawlEvidenceRepository implements CrawlEvidenceRepository 
 
     try {
       const result = this.database.run(
-        `INSERT INTO single_page_crawl_evidence (
-          lead_id,
-          lead_version,
-          outcome,
-          requested_url,
-          attempted_at,
-          final_url,
-          status_code,
-          content_type,
-          body_text,
-          byte_length,
-          redirect_count,
-          failure_code
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        insertParameters(evidence),
+        EVIDENCE_INSERT_SQL,
+        evidenceInsertParameters(evidence),
       );
       if (result.changes !== 1) {
         persistenceFailed();
@@ -219,7 +221,7 @@ export class DatabaseCrawlEvidenceRepository implements CrawlEvidenceRepository 
   findById(id: number): StoredSinglePageCrawlEvidence | undefined {
     let row: EvidenceRow | undefined;
     try {
-      row = this.database.get<EvidenceRow>(selectSql, [id]);
+      row = this.database.get<EvidenceRow>(EVIDENCE_SELECT_BY_ID_SQL, [id]);
     } catch (error) {
       mapDatabaseError(error);
     }

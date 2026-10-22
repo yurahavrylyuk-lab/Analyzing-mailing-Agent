@@ -15,6 +15,7 @@
   "devDependencies": {
     "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^22.20.4",
+    "miniflare": "^4.20260730.0",
     "typescript": "^5.9.3"
   },
   "dependencies": {

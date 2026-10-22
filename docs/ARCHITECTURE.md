@@ -9,7 +9,7 @@ Delta Qoralis will be a modular TypeScript application. Configuration, domain lo
 - `db`: persistence interfaces and implementations.
 - `network-safety`: URL, address, DNS, and redirect validation for outbound connections.
 - `discovery`: bounded search criteria, normalized candidate outcomes, page validation, the provider-independent discovery contract, and the bounded discovery run.
-- `crawler`: one pinned HTML page fetch, in-memory lead-linked single-page crawl evidence, and append-only persistence of one already-built attempt. Lead selection, a crawl command, and later crawl tasks are not started.
+- `crawler`: one pinned HTML page fetch, in-memory lead-linked single-page crawl evidence, append-only persistence of one already-built attempt, a bounded local run, and a tested D1 crawl store. There is no crawl command and no deployed Worker.
 - `website-analysis`: analysis of crawler results.
 - `contacts`: future contact discovery and contact records.
 - `leads`: persisted lead lifecycle and its audited unit of work; qualification remains future work.
@@ -107,7 +107,15 @@ Migration `022-single-page-crawl-evidence` lives in `src/crawler/migration.ts` a
 
 Eligible leads are `recorded` or `reviewing`, with a present non-null website URL, whether manual or discovered. Archived, unknown, and missing leads are excluded. Suppression is not a crawl gate. A `fetched` row, or a `failed` row whose code is not `CANCELLED`, for that lead and the exact current URL blocks another automatic selection. `CANCELLED` alone does not. A later URL change can make the lead eligible again. The run does not retry.
 
-The caller supplies the `AbortSignal`. An already aborted signal selects nothing. Evidence that the collector already returned is persisted before the run stops. The frozen summary is five counters. `crawlerMigrations` is still only `022-single-page-crawl-evidence`. DQ-023 adds no migration and no index. There is no crawl command, actor, audit event, analysis, contact extraction, or outreach. DQ-024 remains untitled and unstarted.
+The caller supplies the `AbortSignal`. An already aborted signal selects nothing. Evidence that the collector already returned is persisted before the run stops. The frozen summary is five counters. `crawlerMigrations` is still only `022-single-page-crawl-evidence`. DQ-023 adds no migration and no index. There is no crawl command, actor, audit event, analysis, contact extraction, or outreach.
+
+## D1 crawl store and async run core
+
+`runBoundedSinglePageCrawlWithDependencies` in `src/crawler/run-loop.ts` is the runtime-neutral loop. It takes no database argument. `select` is required. The Node wrapper `runBoundedSinglePageCrawl(database, request)` is unchanged for callers and still uses the local SQLite selector, `collectSinglePageCrawlEvidence`, and `SinglePageCrawlEvidenceService`. The local Node crawler still runs.
+
+`selectD1CrawlCandidates` and `persistD1CrawlEvidence` are the D1 crawl store. They are not on the public crawler entry. The cloud schema is `business_leads` and `single_page_crawl_evidence` only, including the discovery identity index and the two append-only evidence triggers. D1 represents the canonical `attempted_at` value with short positional GLOB checks plus the existing range, `date`, and `strftime` checks, because one D1 LIKE/GLOB pattern is limited to 50 bytes. The local DQ-022 migration is unchanged.
+
+Miniflare module mode hosts that database in tests only. It is not a deployed module Worker. There is no production D1 database, Worker, Cron, or deployment. `DQ-025 — Worker Pinned Transport and Scheduled Runner` is blocked and unstarted. Phase 2 remains current. Cloudflare autonomous crawling is not yet enabled. `normalizeSinglePageCrawlEvidence` still uses Node `Buffer`. DQ-025 must choose `nodejs_compat` `Buffer` or a proven-equivalent `TextEncoder`.
 
 ## Do-not-contact flow
 
