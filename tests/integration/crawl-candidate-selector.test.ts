@@ -6,9 +6,10 @@ import { DoNotContactService, complianceMigrations } from "../../src/compliance"
 import { SinglePageCrawlEvidenceService, crawlerMigrations } from "../../src/crawler";
 import {
   CrawlRunError,
-  runBoundedSinglePageCrawlWithDependencies,
+  selectCandidates,
   type SinglePageCrawlRunResult,
 } from "../../src/crawler/run";
+import { runBoundedSinglePageCrawlWithDependencies } from "../../src/crawler/run-loop";
 import type { CrawlEvidenceFailureCode } from "../../src/crawler/single-page-evidence";
 import { applyMigrations, createDatabase, type Database, type Migration } from "../../src/db";
 import {
@@ -143,9 +144,9 @@ async function crawl(
 ): Promise<{ leads: BusinessLead[]; result: SinglePageCrawlRunResult }> {
   const leads: BusinessLead[] = [];
   const result = await runBoundedSinglePageCrawlWithDependencies(
-    database,
     { maxAttempts, signal: new AbortController().signal },
     {
+      select: (budget) => selectCandidates(database, budget),
       collect: async (lead) => {
         leads.push(lead);
         return {

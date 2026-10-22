@@ -78,7 +78,7 @@ Phase 1 can turn approved search criteria into a reviewable set of persisted can
 
 **Status: Current**
 
-**Tasks: DQ-020–024**
+**Tasks: DQ-020–025**
 
 **Objective:** Safely retrieve website content from selected candidate leads.
 
@@ -112,7 +112,17 @@ Phase 1 can turn approved search criteria into a reviewable set of persisted can
 
 `DQ-023 — Bounded Single-Page Crawl Run` selects at most 60 eligible `BusinessLead` snapshots in one read transaction, then crawls them one at a time. The read ends before collection. Eligible leads are `recorded` or `reviewing` with a present website URL, manual or discovered. Archived, unknown, and missing leads are excluded. Suppression is not consulted. A finished attempt for the exact current URL blocks another automatic selection. `CANCELLED` does not. Each returned attempt is persisted immediately. The run does not retry. The result is five counters and a stop. There is no migration, index, crawl command, actor, audit event, analysis, contact extraction, or outreach.
 
-DQ-024 remains untitled and has not started. Phase 2 is not completed. Later Phase 2 work still owns a controlled operator entry. No later implementation item is active.
+### DQ-024 — D1 Crawl Store and Async Run Core
+
+**Status: Completed**
+
+`DQ-024 — D1 Crawl Store and Async Run Core` keeps the local Node crawl entry and adds a runtime-neutral async loop plus a D1 crawl store. The store covers `business_leads` and `single_page_crawl_evidence` only. Miniflare module mode is test infrastructure. It is not a deployed module Worker. There is no production D1 database, Worker, Cron, or deployment. The local Node crawler still runs.
+
+### DQ-025 — Worker Pinned Transport and Scheduled Runner
+
+**Status: Blocked / Unstarted**
+
+`DQ-025 — Worker Pinned Transport and Scheduled Runner` has not started. Workers still cannot pin HTTPS for arbitrary public sites. Phase 2 is not completed. Cloudflare autonomous crawling is not yet enabled. Later Phase 2 work still owns a controlled operator entry. Phase 3 — Website Analysis remains planned. No later implementation item is active.
 
 ## Phase 3 — Website Analysis
 
@@ -214,8 +224,10 @@ DQ-022 — Persisted Single-Page Crawl Evidence: Completed.
 
 DQ-023 — Bounded Single-Page Crawl Run: Completed.
 
-DQ-024: untitled and not started.
+DQ-024 — D1 Crawl Store and Async Run Core: Completed.
+
+DQ-025 — Worker Pinned Transport and Scheduled Runner: Blocked / Unstarted.
 
 ## Next Planned Step
 
-Phase 2 — Website Crawling is current and is not completed. DQ-020 — One-Page Pinned Crawl Fetch is completed. DQ-021 — Lead-Linked Single-Page Crawl Evidence is completed. DQ-022 — Persisted Single-Page Crawl Evidence is completed. DQ-023 — Bounded Single-Page Crawl Run is completed. DQ-024 remains untitled and has not started. Later Phase 2 work still owns a controlled operator entry. Phase 3 — Website Analysis remains planned. No later implementation item is active.
+Phase 2 — Website Crawling is current and is not completed. DQ-020 — One-Page Pinned Crawl Fetch is completed. DQ-021 — Lead-Linked Single-Page Crawl Evidence is completed. DQ-022 — Persisted Single-Page Crawl Evidence is completed. DQ-023 — Bounded Single-Page Crawl Run is completed. DQ-024 — D1 Crawl Store and Async Run Core is completed. DQ-025 — Worker Pinned Transport and Scheduled Runner is blocked and unstarted. Cloudflare autonomous crawling is not yet enabled. Later Phase 2 work still owns a controlled operator entry. Phase 3 — Website Analysis remains planned. No later implementation item is active.

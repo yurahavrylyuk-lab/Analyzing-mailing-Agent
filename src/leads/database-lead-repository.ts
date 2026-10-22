@@ -64,7 +64,7 @@ function observationFromRow(row: BusinessLeadRow): WebsiteObservation {
   throw new LeadPersistenceError();
 }
 
-function leadFromRow(row: BusinessLeadRow): BusinessLead {
+export function leadFromRow(row: BusinessLeadRow): BusinessLead {
   if (
     !isBusinessLeadId(row.id) ||
     typeof row.business_name !== "string" ||
