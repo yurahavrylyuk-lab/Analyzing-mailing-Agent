@@ -9,7 +9,7 @@ Delta Qoralis will be a modular TypeScript application. Configuration, domain lo
 - `db`: persistence interfaces and implementations.
 - `network-safety`: URL, address, DNS, and redirect validation for outbound connections.
 - `discovery`: bounded search criteria, normalized candidate outcomes, page validation, the provider-independent discovery contract, and the bounded discovery run.
-- `crawler`: one pinned HTML page fetch, in-memory lead-linked single-page crawl evidence, append-only persistence of one already-built attempt, a bounded local run, a tested D1 crawl store, and the repository cloud crawl command. The Worker gateway is not deployed.
+- `crawler`: one pinned HTML page fetch, in-memory lead-linked single-page crawl evidence, append-only persistence of one already-built attempt, a bounded local run, a tested D1 crawl store, the repository cloud crawl command, and the deployed Worker gateway. The Worker selects and persists production D1 rows. It does not fetch business websites.
 - `website-analysis`: analysis of crawler results.
 - `contacts`: future contact discovery and contact records.
 - `leads`: persisted lead lifecycle and its audited unit of work; qualification remains future work.
@@ -115,7 +115,7 @@ The caller supplies the `AbortSignal`. An already aborted signal selects nothing
 
 `selectD1CrawlCandidates` and `persistD1CrawlEvidence` are the D1 crawl store. They are not on the public crawler entry. The cloud schema is `business_leads` and `single_page_crawl_evidence` only, including the discovery identity index and the two append-only evidence triggers. D1 represents the canonical `attempted_at` value with short positional GLOB checks plus the existing range, `date`, and `strftime` checks, because one D1 LIKE/GLOB pattern is limited to 50 bytes. The local DQ-022 migration is unchanged.
 
-Miniflare module mode hosts that database in tests only. It is not a deployed module Worker. There is no production D1 database and no deployment. `DQ-025 — GitHub Actions Scheduled Crawl Runner and D1 Worker Gateway` is implemented in the repository and is not production-complete. Production activation has not been performed. GitHub Actions Node collects through `fetchCrawlPage`. The Worker only selects and persists. `normalizeSinglePageCrawlEvidence` keeps Node `Buffer` through `nodejs_compat`. Phase 2 remains current and is not completed. Cloudflare autonomous crawling is not yet enabled.
+Miniflare module mode hosts that database in tests only. It is not the deployed module Worker. Production D1 exists, and the Worker gateway is deployed. `DQ-025 — GitHub Actions Scheduled Crawl Runner and D1 Worker Gateway` is completed. Production activation was verified through GitHub Actions run 39773510876. The active path is a GitHub Actions scheduled or manual run, then the Node crawl runner, then the authenticated Worker gateway for D1 select and persist. The same Node runner fetches the public website through `fetchCrawlPage`. The Worker only selects and persists. `normalizeSinglePageCrawlEvidence` keeps Node `Buffer` through `nodejs_compat`. Discovery still uses local SQLite and does not feed production D1 automatically. Scheduled crawling of an eligible production D1 lead does not require the Mac. The workflow cron is `17 6 * * *` with timezone `Europe/Warsaw`, plus `workflow_dispatch`. Phase 2 is completed. Phase 3 — Website Analysis is current, and DQ-030–039 remain planned.
 
 ## Do-not-contact flow
 

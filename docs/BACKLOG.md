@@ -2,7 +2,7 @@
 
 ## Current Status
 
-Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is completed. DQ-010, DQ-011, DQ-012, DQ-013, DQ-014, and DQ-015 are completed. Phase 2 — Website Crawling is current and is not completed. DQ-020 — One-Page Pinned Crawl Fetch is completed. DQ-021 — Lead-Linked Single-Page Crawl Evidence is completed. DQ-022 — Persisted Single-Page Crawl Evidence is completed. DQ-023 — Bounded Single-Page Crawl Run is completed. DQ-024 — D1 Crawl Store and Async Run Core is completed. `DQ-025 — GitHub Actions Scheduled Crawl Runner and D1 Worker Gateway` is implemented in the repository and is not production-complete. Production activation has not been performed. Cloudflare autonomous crawling is not yet enabled. Phase 3 — Website Analysis remains planned. No later implementation item is active.
+Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is completed. DQ-010, DQ-011, DQ-012, DQ-013, DQ-014, and DQ-015 are completed. Phase 2 — Website Crawling is completed. DQ-020 through DQ-025 are completed. Production activation was verified through GitHub Actions run 39773510876. Discovery still uses local SQLite and does not feed production D1 automatically. The autonomous path is an eligible production D1 lead, then the scheduled GitHub Actions crawl, then production D1 evidence. Phase 3 — Website Analysis is current. DQ-030–039 remain planned. The next development action is to architect the first Phase 3 website-analysis slice before implementation.
 
 ## P0 — Foundation
 
@@ -130,13 +130,19 @@ Expose the completed discovery flow through one controlled command, `npm run dis
 
 ### DQ-025 — GitHub Actions Scheduled Crawl Runner and D1 Worker Gateway
 
-**Status: Repository implementation exists; production activation pending**
+**Status: Completed**
 
-`DQ-025 — GitHub Actions Scheduled Crawl Runner and D1 Worker Gateway` is implemented in the repository and is not production-complete. Production activation has not been performed. Production D1, the Worker deploy, the Worker secret, and the GitHub Actions crawl run are still human-controlled and have not been performed. Phase 2 — Website Crawling remains current and is not completed. Cloudflare autonomous crawling is not yet enabled. Phase 3 — Website Analysis remains planned.
+`DQ-025 — GitHub Actions Scheduled Crawl Runner and D1 Worker Gateway` is completed. Production activation was verified through GitHub Actions run 39773510876. That `workflow_dispatch` run on `main` at `a1ad31fddfcd9860f37320d46461062afa7644bf` succeeded: selected 1, attempted 1, fetched 1, failed 0, persisted 1. The stored evidence outcome was fetched for `https://example.com/`, HTTP 200, `text/html`.
+
+The active path is a GitHub Actions scheduled or manual run, then the Node crawl runner, then the authenticated Worker gateway for D1 select and persist. The same Node runner uses the existing DQ-020 pinned transport to fetch the public website, and evidence is persisted to production D1. The Worker does not fetch business websites. The production crawl workflow is active at cron `17 6 * * *` with timezone `Europe/Warsaw`, and `workflow_dispatch`. Mac participation is not required for scheduled runtime execution. Discovery still uses local SQLite and does not currently feed production D1 automatically.
 
 The crawl still uses the network-target safety established by DQ-006. Crawling uses bounded HTTP behavior, manually validated redirects, and resource limits. One bounded run selects leads and stores each finished attempt. The Worker does not fetch business websites. The crawler gathers evidence but does not decide whether a business is qualified. The expected output is structured crawl results ready for website analysis.
 
 ### DQ-030–039 — Website Analysis
+
+**Status: Planned**
+
+Phase 3 — Website Analysis is current. DQ-030–039 remain planned. The next development action is to architect the first Phase 3 website-analysis slice before implementation.
 
 Inspect stored crawl evidence for outdated design, poor usability, missing functionality, or other potential improvement opportunities. Produce structured observations linked to supporting evidence so later decisions remain reviewable. Replaceable AI analysis may be introduced in this range after it is designed, but no AI analysis exists yet. The expected output is website audit information for qualification, not contact or outreach activity.
 

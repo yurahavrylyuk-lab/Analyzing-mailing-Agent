@@ -18,13 +18,15 @@ The Architect inspects the repository and designs only. The Builder implements o
 
 ## Current Project Position
 
-Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is completed. Phase 2 — Website Crawling is current and is not completed.
+Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is completed. Phase 2 — Website Crawling is completed. Phase 3 — Website Analysis is current.
 
-Completed: DQ-010, DQ-011, DQ-012, DQ-013, DQ-014, DQ-015, DQ-020, DQ-021, DQ-022, DQ-023, and DQ-024.
+Completed: DQ-010, DQ-011, DQ-012, DQ-013, DQ-014, DQ-015, DQ-020, DQ-021, DQ-022, DQ-023, DQ-024, and DQ-025.
 
-`DQ-025 — GitHub Actions Scheduled Crawl Runner and D1 Worker Gateway` is implemented in the repository and is not production-complete. Production activation has not been performed. Cloudflare autonomous crawling is not yet enabled.
+`DQ-025 — GitHub Actions Scheduled Crawl Runner and D1 Worker Gateway` is completed. Production activation was verified through GitHub Actions run 39773510876. That `workflow_dispatch` run on `main` at `a1ad31fddfcd9860f37320d46461062afa7644bf` succeeded: selected 1, attempted 1, fetched 1, failed 0, persisted 1. The stored evidence outcome was fetched for `https://example.com/`, HTTP 200, `text/html`.
 
-No later implementation item is currently active.
+The active path is a GitHub Actions scheduled or manual run, then the Node crawl runner, then the authenticated Worker gateway for D1 select and persist. The same Node runner uses the existing DQ-020 pinned transport to fetch the public website, and evidence is persisted to production D1. The Worker does not fetch business websites. Discovery still uses local SQLite and does not currently feed production D1 automatically. The whole discovery-to-crawl pipeline is not autonomous. What is autonomous is an eligible production D1 lead, then the scheduled GitHub Actions crawl, then production D1 evidence. The production crawl workflow is active at cron `17 6 * * *` with timezone `Europe/Warsaw`, and `workflow_dispatch`. Mac participation is not required for scheduled runtime execution.
+
+DQ-030–039 remain planned. The next development action is to architect the first Phase 3 website-analysis slice before implementation. Phase 3 is not implemented.
 
 ## Completed Discovery Capabilities
 
@@ -38,7 +40,8 @@ No later implementation item is currently active.
 - **DQ-021** added `collectSinglePageCrawlEvidence` in `src/crawler/single-page-evidence.ts`. One caller-held `BusinessLead` with a present website observation becomes one frozen in-memory evidence value through one `fetchCrawlPage` call. The stored URL is passed unchanged. Known network and crawl errors become failure codes. Other errors propagate. The lead is not mutated. Durable storage is DQ-022.
 - **DQ-022** added `SinglePageCrawlEvidenceService` and migration `022-single-page-crawl-evidence`. One already-built fetched or failed attempt becomes one append-only row and can be read by id. HTML is untrusted stored text. Failures store an allowlisted code and no raw error message. The lead is not mutated. There is no crawl command, spider, attempt list, audit event, or actor.
 - **DQ-023** added `runBoundedSinglePageCrawl` in `src/crawler/run.ts`. One call selects at most 60 eligible lead snapshots, ends that read, then collects and immediately persists one single-page attempt at a time. The summary is five counters. A finished attempt for the current website URL is not selected again. `CANCELLED` leaves that URL eligible for a later run. There is no crawl command, retry, migration, index, actor, audit event, or contact guard.
-- **DQ-024** moved the bounded loop to `src/crawler/run-loop.ts` and added a D1 crawl store for `business_leads` and `single_page_crawl_evidence`. The Node function `runBoundedSinglePageCrawl(database, request)` still runs the local crawler. Miniflare module mode is test infrastructure only. There is no deployed Worker, Cron, or production D1 database.
+- **DQ-024** moved the bounded loop to `src/crawler/run-loop.ts` and added a D1 crawl store for `business_leads` and `single_page_crawl_evidence`. The Node function `runBoundedSinglePageCrawl(database, request)` still runs the local crawler. Miniflare module mode is test infrastructure only. DQ-024 itself does not deploy a Worker, add Cron, or create a production D1 database.
+- **DQ-025** added the GitHub Actions crawl workflow and the authenticated Worker gateway. The Worker selects and persists production D1 rows. The Node runner fetches the public website through the DQ-020 pinned transport. Production activation was verified through GitHub Actions run 39773510876.
 
 ## Current Discovery Pipeline
 
@@ -61,7 +64,7 @@ The operator supplies `--location`, `--query`, `--actor`, and an optional `--max
 
 ## What Is Not Implemented Yet
 
-- A spider, website analysis, contact extraction, and outreach. The repository contains `npm run crawl:cloud`. `DQ-025 — GitHub Actions Scheduled Crawl Runner and D1 Worker Gateway` is implemented in the repository and is not production-complete. Production activation has not been performed. There is no attempt list. Discovery remains on local SQLite.
+- A spider, website analysis, contact extraction, and outreach. The repository contains `npm run crawl:cloud`, and the production crawl of an eligible D1 lead is active. There is no attempt list. Discovery remains on local SQLite and does not feed production D1 automatically.
 - Website analysis.
 - Qualification.
 - Contact discovery.
@@ -71,7 +74,7 @@ The operator supplies `--location`, `--query`, `--actor`, and an optional `--max
 
 ## Next Planned Task
 
-**Phase 2 — Website Crawling** is current and is not completed. DQ-020 — One-Page Pinned Crawl Fetch is completed. DQ-021 — Lead-Linked Single-Page Crawl Evidence is completed. DQ-022 — Persisted Single-Page Crawl Evidence is completed. DQ-023 — Bounded Single-Page Crawl Run is completed. DQ-024 — D1 Crawl Store and Async Run Core is completed. `DQ-025 — GitHub Actions Scheduled Crawl Runner and D1 Worker Gateway` is implemented in the repository and is not production-complete. Production activation has not been performed. Cloudflare autonomous crawling is not yet enabled. Phase 3 — Website Analysis remains planned. No later implementation item is active.
+**Phase 2 — Website Crawling** is completed. DQ-020 through DQ-025 are completed. **Phase 3 — Website Analysis** is current and is not implemented. DQ-030–039 remain planned. The next development action is to architect the first Phase 3 website-analysis slice before implementation. Discovery still uses local SQLite and does not feed production D1 automatically.
 
 DQ-015 is completed. Its operator command is `npm run discover`. It calls `runBoundedDiscovery()` and does not reimplement paging or persistence. Completing the command completed Phase 1. That command does not fetch a page, discover contacts, or send outreach.
 
@@ -93,7 +96,7 @@ DQ-023 owns `runBoundedSinglePageCrawl` in `src/crawler/run.ts`. One call valida
 
 ## DQ-024 Boundary
 
-DQ-024 owns the runtime-neutral loop in `src/crawler/run-loop.ts` and the D1 crawl store in `src/crawler/d1-crawl-store.ts`. `runBoundedSinglePageCrawl(database, request)` remains the Node entry and still crawls through the existing transport. The D1 schema is `business_leads` and `single_page_crawl_evidence` only. Miniflare module mode is test infrastructure only, not a deployed module Worker. DQ-024 does not deploy a Worker, add Cron, create a production D1 database, or perform a deployment. `DQ-025 — GitHub Actions Scheduled Crawl Runner and D1 Worker Gateway` is implemented in the repository and is not production-complete. Production activation has not been performed. Phase 2 remains current and is not completed. Cloudflare autonomous crawling is not yet enabled.
+DQ-024 owns the runtime-neutral loop in `src/crawler/run-loop.ts` and the D1 crawl store in `src/crawler/d1-crawl-store.ts`. `runBoundedSinglePageCrawl(database, request)` remains the Node entry and still crawls through the existing transport. The D1 schema is `business_leads` and `single_page_crawl_evidence` only. Miniflare module mode is test infrastructure only, not a deployed module Worker. DQ-024 does not deploy a Worker, add Cron, create a production D1 database, or perform a deployment. DQ-025 is completed, and production activation was verified through GitHub Actions run 39773510876. The Worker does not fetch business websites. Scheduled runtime execution does not require the Mac.
 
 ## DQ-015 Boundary
 
