@@ -76,7 +76,7 @@ Phase 1 can turn approved search criteria into a reviewable set of persisted can
 
 ## Phase 2 — Website Crawling
 
-**Status: Current**
+**Status: Completed**
 
 **Tasks: DQ-020–025**
 
@@ -120,13 +120,19 @@ Phase 1 can turn approved search criteria into a reviewable set of persisted can
 
 ### DQ-025 — GitHub Actions Scheduled Crawl Runner and D1 Worker Gateway
 
-**Status: Repository implementation exists; production activation pending**
+**Status: Completed**
 
-`DQ-025 — GitHub Actions Scheduled Crawl Runner and D1 Worker Gateway` is implemented in the repository and is not production-complete. Production activation has not been performed. Production D1, the Worker deploy, the Worker secret, and the GitHub Actions crawl run are still human-controlled and have not been performed. Phase 2 — Website Crawling remains current and is not completed. Cloudflare autonomous crawling is not yet enabled. Phase 3 — Website Analysis remains planned.
+`DQ-025 — GitHub Actions Scheduled Crawl Runner and D1 Worker Gateway` is completed. Production activation was verified through GitHub Actions run 39773510876. That `workflow_dispatch` run on `main` at `a1ad31fddfcd9860f37320d46461062afa7644bf` succeeded: selected 1, attempted 1, fetched 1, failed 0, persisted 1. The stored evidence outcome was fetched for `https://example.com/`, HTTP 200, `text/html`.
+
+The active path is a GitHub Actions scheduled or manual run, then the Node crawl runner, then the authenticated Worker gateway for D1 select and persist. The same Node runner uses the existing DQ-020 pinned transport to fetch the public website, and evidence is persisted to production D1. The Worker does not fetch business websites.
+
+Discovery still uses local SQLite. Discovery does not currently feed production D1 automatically. The whole discovery-to-crawl pipeline is not autonomous. What is autonomous is an eligible production D1 lead, then the scheduled GitHub Actions crawl, then production D1 evidence.
+
+The production crawl workflow is active at cron `17 6 * * *` with timezone `Europe/Warsaw`, and `workflow_dispatch`. Mac participation is not required for scheduled runtime execution.
 
 ## Phase 3 — Website Analysis
 
-**Status: Planned**
+**Status: Current**
 
 **Tasks: DQ-030–039**
 
@@ -134,7 +140,7 @@ Phase 1 can turn approved search criteria into a reviewable set of persisted can
 
 **Expected output:** Reviewable `WebsiteAudit` information and supporting evidence that qualification can consume.
 
-Analysis remains separate from contact and outreach. Replaceable AI-backed analysis may be introduced behind defined interfaces in later design work, but it is not currently implemented.
+Analysis remains separate from contact and outreach. Replaceable AI-backed analysis may be introduced behind defined interfaces in later design work, but it is not currently implemented. DQ-030–039 remain planned. The next development action is to architect the first Phase 3 website-analysis slice before implementation.
 
 ## Phase 4 — Qualification
 
@@ -214,7 +220,7 @@ DQ-014 — Bounded Discovery Run and Persistence Orchestration: Completed.
 
 DQ-015 — Controlled Discovery Command and Phase 1 Integration: Completed.
 
-Phase 2 — Website Crawling: Current. Phase 2 is not completed.
+Phase 2 — Website Crawling: Completed.
 
 DQ-020 — One-Page Pinned Crawl Fetch: Completed.
 
@@ -226,8 +232,10 @@ DQ-023 — Bounded Single-Page Crawl Run: Completed.
 
 DQ-024 — D1 Crawl Store and Async Run Core: Completed.
 
-DQ-025 — GitHub Actions Scheduled Crawl Runner and D1 Worker Gateway: Repository implementation exists; production activation has not been performed.
+DQ-025 — GitHub Actions Scheduled Crawl Runner and D1 Worker Gateway: Completed. Production activation was verified through GitHub Actions run 39773510876.
+
+Phase 3 — Website Analysis: Current. DQ-030–039 remain planned.
 
 ## Next Planned Step
 
-Phase 2 — Website Crawling is current and is not completed. DQ-020 — One-Page Pinned Crawl Fetch is completed. DQ-021 — Lead-Linked Single-Page Crawl Evidence is completed. DQ-022 — Persisted Single-Page Crawl Evidence is completed. DQ-023 — Bounded Single-Page Crawl Run is completed. DQ-024 — D1 Crawl Store and Async Run Core is completed. `DQ-025 — GitHub Actions Scheduled Crawl Runner and D1 Worker Gateway` is implemented in the repository and is not production-complete. Production activation has not been performed. Production D1, the Worker deploy, the Worker secret, and the GitHub Actions crawl run are still human-controlled and have not been performed. Cloudflare autonomous crawling is not yet enabled. Phase 3 — Website Analysis remains planned. No later implementation item is active.
+Phase 3 — Website Analysis is current and is not implemented. DQ-030–039 remain planned. The next development action is to architect the first Phase 3 website-analysis slice before implementation. DQ-020 through DQ-025 are completed. Discovery still uses local SQLite and does not feed production D1 automatically. Scheduled crawling of an eligible production D1 lead does not require the Mac.

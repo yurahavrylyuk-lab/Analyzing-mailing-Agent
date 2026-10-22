@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted for implementation. Production activation is not done. Production activation has not been performed.
+Accepted. Production activation is verified.
 
 ## Context
 
@@ -14,4 +14,4 @@ GitHub Actions runs `npm run crawl:cloud` once per schedule. The Worker authenti
 
 ## Consequences
 
-`DQ-025 — GitHub Actions Scheduled Crawl Runner and D1 Worker Gateway` is implemented in the repository and is not production-complete. Production activation has not been performed. Phase 2 stays current until the ten production checks in the spec succeed. Phase 2 is not completed. Discovery stays on local SQLite. Decision 0015 stays the DQ-024 record. Cloudflare autonomous crawling is not yet enabled. Phase 3 stays planned.
+`DQ-025 — GitHub Actions Scheduled Crawl Runner and D1 Worker Gateway` is completed. Production activation was verified through GitHub Actions run 39773510876. That `workflow_dispatch` run on `main` at `a1ad31fddfcd9860f37320d46461062afa7644bf` succeeded: selected 1, attempted 1, fetched 1, failed 0, persisted 1. The stored evidence outcome was fetched for `https://example.com/`, HTTP 200, `text/html`. Phase 2 — Website Crawling is completed. Discovery stays on local SQLite and does not feed production D1 automatically. Decision 0015 stays the DQ-024 record. The Worker does not fetch business websites. Scheduled runtime execution does not require the Mac. Phase 3 — Website Analysis is current. DQ-030–039 remain planned.

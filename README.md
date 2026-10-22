@@ -4,7 +4,11 @@ Delta Qoralis is planned as a human-controlled lead discovery, website analysis,
 
 ## Status
 
-**Phase 1 — Lead Discovery** is complete. Phase 0 is complete. Phase 2 — Website Crawling is current and is not completed. DQ-010 established the provider-independent discovery contract, DQ-011 completed audited and idempotent persistence for accepted candidates, DQ-012 selected Geoapify with explicit configuration, DQ-013 completed the bounded Geoapify page adapter, DQ-014 completed the bounded discovery run, and DQ-015 added the controlled discovery command. `npm run discover` is the only operator entry. It calls `runBoundedDiscovery` once and persists accepted outcomes through the existing lead boundary. DQ-020 added one offline-tested page fetch. Every connection goes through DQ-006, the socket is pinned, and redirects are revalidated. DQ-021 — Lead-Linked Single-Page Crawl Evidence is completed. One present lead website can become in-memory crawl evidence. DQ-022 — Persisted Single-Page Crawl Evidence is completed. One already-built attempt is stored append-only and can be read by id. Stored HTML is untrusted data, and a failure stores an allowlisted code with no raw error message. DQ-023 — Bounded Single-Page Crawl Run is completed. One run selects at most 60 eligible lead snapshots, crawls them one at a time, persists each finished attempt immediately, and returns numeric counts. There is no crawl command, no spider, no analysis, and no outreach. Qualification, contact discovery, AI, messaging, payments, deployment, dashboard, and workflow automation are not implemented. DQ-024 remains untitled and has not started. Phase 3 — Website Analysis remains planned.
+**Phase 1 — Lead Discovery** is complete. Phase 0 is complete. Phase 2 — Website Crawling is complete. Phase 3 — Website Analysis is current and is not yet implemented.
+
+DQ-010 established the provider-independent discovery contract, DQ-011 completed audited and idempotent persistence for accepted candidates, DQ-012 selected Geoapify with explicit configuration, DQ-013 completed the bounded Geoapify page adapter, DQ-014 completed the bounded discovery run, and DQ-015 added the controlled discovery command. `npm run discover` is the discovery operator entry. It calls `runBoundedDiscovery` once and persists accepted outcomes through the existing lead boundary to local SQLite. Discovery does not automatically populate production D1.
+
+DQ-020 through DQ-025 are completed. DQ-020 added one offline-tested page fetch. Every connection goes through DQ-006, the socket is pinned, and redirects are revalidated. DQ-021 — Lead-Linked Single-Page Crawl Evidence is completed. One present lead website can become in-memory crawl evidence. DQ-022 — Persisted Single-Page Crawl Evidence is completed. One already-built attempt is stored append-only and can be read by id. Stored HTML is untrusted data, and a failure stores an allowlisted code with no raw error message. DQ-023 — Bounded Single-Page Crawl Run is completed. One local run selects at most 60 eligible lead snapshots, crawls them one at a time, persists each finished attempt immediately, and returns numeric counts. DQ-024 — D1 Crawl Store and Async Run Core is completed. DQ-025 — GitHub Actions Scheduled Crawl Runner and D1 Worker Gateway is completed. `npm run crawl:cloud` is the production cloud command for a scheduled or manual GitHub Actions crawl. The autonomous production path is an eligible production D1 lead, then the GitHub Actions Node crawl runner, then the existing DQ-020 pinned website transport, then the authenticated Worker gateway for D1 persistence, then production D1 evidence. The Worker does not fetch business websites. The whole discovery-to-crawl pipeline is not autonomous. There is no spider or outreach. Qualification, contact discovery, AI, messaging, payments, and a dashboard are not implemented. DQ-030–039 remain planned.
 
 ## Local setup
 
@@ -18,6 +22,7 @@ Delta Qoralis is planned as a human-controlled lead discovery, website analysis,
 - `npm run typecheck` — checks the TypeScript project without emitting files.
 - `npm run discover -- --location <location> --query <query> --actor <id> [--max-results <count>]` — runs one bounded Geoapify discovery.
 - `npm run discover -- --help` and `npm run discover -- -h` — print usage and exit 0.
+- `npm run crawl:cloud` — runs the bounded production crawl runner using the configured authenticated gateway.
 
 ## Configuration
 
@@ -51,19 +56,19 @@ Every actual lead mutation requires a claimed human or system actor and writes o
 
 ## One-page crawl fetch
 
-`fetchCrawlPage` retrieves one HTML page. Every connection goes through DQ-006. The socket is pinned to the first approved address, and redirects are revalidated. The result is frozen in memory. The fetch does not store the page. There is no crawl command, spider, analysis, contact extraction, or outreach. Tests for this fetch stay offline.
+`fetchCrawlPage` retrieves one HTML page. Every connection goes through DQ-006. The socket is pinned to the first approved address, and redirects are revalidated. The result is frozen in memory. The fetch does not store the page. There is no spider, analysis, contact extraction, or outreach. Tests for this fetch stay offline.
 
 ## Lead-linked crawl evidence
 
-`collectSinglePageCrawlEvidence` reads one caller-held lead. When the website observation is present, it calls `fetchCrawlPage` once with the stored URL and returns frozen in-memory evidence for the fetched page or for a known network or crawl failure. The stored URL stays untrusted. The lead is not changed. There is no crawl command, no spider, no analysis, and no outreach.
+`collectSinglePageCrawlEvidence` reads one caller-held lead. When the website observation is present, it calls `fetchCrawlPage` once with the stored URL and returns frozen in-memory evidence for the fetched page or for a known network or crawl failure. The stored URL stays untrusted. The lead is not changed. There is no spider, no analysis, and no outreach.
 
 ## Persisted crawl evidence
 
-`SinglePageCrawlEvidenceService` stores one already-built attempt in append-only `single_page_crawl_evidence` and reads that attempt by id. HTML is untrusted stored data. A failure stores an allowlisted code and no raw error message. The lead row is not changed. `npm run discover` does not apply this migration. This service does not select leads. There is no crawl command, spider, or attempt list.
+`SinglePageCrawlEvidenceService` stores one already-built attempt in append-only `single_page_crawl_evidence` and reads that attempt by id. HTML is untrusted stored data. A failure stores an allowlisted code and no raw error message. The lead row is not changed. `npm run discover` does not apply this migration. This service does not select leads. There is no spider or attempt list.
 
 ## Bounded single-page crawl run
 
-`runBoundedSinglePageCrawl` selects at most 60 eligible lead snapshots in one read transaction, then crawls them one at a time. The read ends before collection. Each finished attempt is persisted immediately. A finished attempt for the current website URL blocks another automatic selection. `CANCELLED` does not. The summary is five counters. There is no crawl command, spider, retry, analysis, contact extraction, or outreach. DQ-024 remains untitled and has not started.
+`runBoundedSinglePageCrawl` selects at most 60 eligible lead snapshots in one read transaction, then crawls them one at a time. The read ends before collection. Each finished attempt is persisted immediately. A finished attempt for the current website URL blocks another automatic selection. `CANCELLED` does not. The summary is five counters. The local bounded run still exists. `npm run crawl:cloud` is the production cloud command. DQ-024 is completed. DQ-025 is completed. Phase 2 is completed. Phase 3 — Website Analysis is current and is not yet implemented. DQ-030–039 remain planned. There is no spider, retry, analysis, contact extraction, or outreach.
 
 ## Do-not-contact protection
 
