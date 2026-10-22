@@ -27,7 +27,7 @@ test("crawl workflow schedules 06:17 Europe/Warsaw and has no deploy credentials
   }
 });
 
-test("wrangler config binds DB and does not store the gateway token", () => {
+test("wrangler config binds production DB and does not store the gateway token", () => {
   const config = readFileSync(join(root, "wrangler.toml"), "utf8");
   for (const required of [
     'name = "delta-qoralis-crawl-gateway"',
@@ -36,7 +36,7 @@ test("wrangler config binds DB and does not store the gateway token", () => {
     "nodejs_compat",
     'binding = "DB"',
     'database_name = "delta-qoralis-crawl"',
-    'database_id = "REPLACE_BEFORE_DEPLOY"',
+    'database_id = "59efef60-8acd-4277-b808-8220de5521eb"',
   ]) {
     assert.equal(config.includes(required), true, required);
   }
@@ -46,6 +46,7 @@ test("wrangler config binds DB and does not store the gateway token", () => {
     "crons",
     "CRAWL_GATEWAY_TOKEN",
     "migrations apply",
+    'database_id = "REPLACE_BEFORE_DEPLOY"',
   ]) {
     assert.equal(config.includes(absent), false, absent);
   }
