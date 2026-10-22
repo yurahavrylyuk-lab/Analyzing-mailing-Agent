@@ -2,7 +2,7 @@
 
 ## Current Status
 
-Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is completed. DQ-010, DQ-011, DQ-012, DQ-013, DQ-014, and DQ-015 are completed. Phase 2 — Website Crawling is completed. DQ-020 through DQ-025 are completed. Production activation was verified through GitHub Actions run 39773510876. Discovery still uses local SQLite and does not feed production D1 automatically. The autonomous path is an eligible production D1 lead, then the scheduled GitHub Actions crawl, then production D1 evidence. Phase 3 — Website Analysis is current. DQ-030–039 remain planned. The next development action is to architect the first Phase 3 website-analysis slice before implementation.
+Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is completed. DQ-010, DQ-011, DQ-012, DQ-013, DQ-014, and DQ-015 are completed. Phase 2 — Website Crawling is completed. DQ-020 through DQ-025 are completed. Production activation was verified through GitHub Actions run 39773510876. Discovery still uses local SQLite and does not feed production D1 automatically. The autonomous path is an eligible production D1 lead, then the scheduled GitHub Actions crawl, then production D1 evidence. Phase 3 — Website Analysis is current and is not complete. DQ-030 — Deterministic Website Facts is completed. DQ-031–039 remain planned. The next planned step is the provider-neutral AI website-analysis slice: deterministic `WebsiteFacts`, then provider-neutral AI analysis. The approved future free-only fallback order is Gemini, then Groq, then Cloudflare Workers AI, then OpenRouter. That slice is planned and is not implemented. No AI website analysis exists yet.
 
 ## P0 — Foundation
 
@@ -138,13 +138,17 @@ The active path is a GitHub Actions scheduled or manual run, then the Node crawl
 
 The crawl still uses the network-target safety established by DQ-006. Crawling uses bounded HTTP behavior, manually validated redirects, and resource limits. One bounded run selects leads and stores each finished attempt. The Worker does not fetch business websites. The crawler gathers evidence but does not decide whether a business is qualified. The expected output is structured crawl results ready for website analysis.
 
-### DQ-030–039 — Website Analysis
+### DQ-030 — Deterministic Website Facts
+
+**Status: Completed**
+
+`DQ-030 — Deterministic Website Facts` consumes one persisted fetched crawl evidence record. `extractWebsiteFacts` returns one frozen deterministic `WebsiteFacts` value. It extracts metadata and objective structural facts, and creates cleaned visible text capped at 12,000 UTF-16 code units. Failed evidence is rejected with `WebsiteFactsError` and code `EVIDENCE_NOT_ANALYZABLE`. It uses stored HTML only. It performs no network request, no AI analysis, no persistence, no qualification, and no outreach.
+
+### DQ-031–039 — Website Analysis
 
 **Status: Planned**
 
-Phase 3 — Website Analysis is current. DQ-030–039 remain planned. The next development action is to architect the first Phase 3 website-analysis slice before implementation.
-
-Inspect stored crawl evidence for outdated design, poor usability, missing functionality, or other potential improvement opportunities. Produce structured observations linked to supporting evidence so later decisions remain reviewable. Replaceable AI analysis may be introduced in this range after it is designed, but no AI analysis exists yet. The expected output is website audit information for qualification, not contact or outreach activity.
+Phase 3 — Website Analysis remains current and is not complete. DQ-031–039 remain planned. The next planned step is the provider-neutral AI website-analysis slice: deterministic `WebsiteFacts`, then provider-neutral AI analysis. The approved future free-only fallback order is Gemini, then Groq, then Cloudflare Workers AI, then OpenRouter. That slice is planned and is not implemented. No AI website analysis exists yet. Later analysis may inspect stored crawl evidence for outdated design, poor usability, missing functionality, or other potential improvement opportunities, and produce structured observations linked to supporting evidence. The expected output is website audit information for qualification, not contact or outreach activity.
 
 ### DQ-040–043 — Qualification
 

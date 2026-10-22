@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "better-sqlite3": "^13.0.3",
-    "ipaddr.js": "^2.2.0"
+    "ipaddr.js": "^2.2.0",
+    "parse5": "^8.0.1"
   }
 }
