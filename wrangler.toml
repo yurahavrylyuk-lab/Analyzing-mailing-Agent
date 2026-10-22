@@ -1,0 +1,9 @@
+name = "delta-qoralis-crawl-gateway"
+main = "src/crawl-gateway/worker.ts"
+compatibility_date = "2026-10-22"
+compatibility_flags = [ "nodejs_compat" ]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "delta-qoralis-crawl"
+database_id = "REPLACE_BEFORE_DEPLOY"

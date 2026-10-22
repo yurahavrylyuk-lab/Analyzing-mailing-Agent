@@ -1,0 +1,39 @@
+name: Crawl
+
+on:
+  schedule:
+    # 06:17 Europe/Warsaw daily. timezone handles DST. Minute 17 avoids the start of the hour.
+    - cron: "17 6 * * *"
+      timezone: "Europe/Warsaw"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: crawl
+  cancel-in-progress: false
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Crawl
+        env:
+          CRAWL_GATEWAY_URL: ${{ secrets.CRAWL_GATEWAY_URL }}
+          CRAWL_GATEWAY_TOKEN: ${{ secrets.CRAWL_GATEWAY_TOKEN }}
+          CRAWL_MAX_ATTEMPTS: "10"
+        run: npm run crawl:cloud

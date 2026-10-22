@@ -240,14 +240,25 @@ test("discovery composition does not apply crawler migrations", () => {
   const command = readFileSync(join(root, "src/discovery/command.ts"), "utf8");
   const runner = readFileSync(join(root, "scripts/run-discovery.cjs"), "utf8");
   const manifest = JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as {
-    scripts: { discover: string; test: string; typecheck: string };
+    scripts: {
+      "crawl:cloud": string;
+      discover: string;
+      test: string;
+      typecheck: string;
+    };
   };
   assert.equal(command.includes("crawlerMigrations"), false);
   assert.equal(command.includes("singlePageCrawlEvidenceMigration"), false);
   assert.equal(command.includes("022-single-page-crawl-evidence"), false);
   assert.equal(runner.includes("crawlerMigrations"), false);
   assert.equal(manifest.scripts.discover.includes("crawl"), false);
-  assert.deepEqual(Object.keys(manifest.scripts).sort(), ["discover", "test", "typecheck"]);
+  assert.equal(manifest.scripts["crawl:cloud"], "node scripts/run-crawl-cloud.cjs");
+  assert.deepEqual(Object.keys(manifest.scripts).sort(), [
+    "crawl:cloud",
+    "discover",
+    "test",
+    "typecheck",
+  ]);
 
   const index = readFileSync(join(root, "src/crawler/index.ts"), "utf8");
   assert.equal(index.includes("normalizeSinglePageCrawlEvidence"), false);

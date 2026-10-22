@@ -116,13 +116,13 @@ Phase 1 can turn approved search criteria into a reviewable set of persisted can
 
 **Status: Completed**
 
-`DQ-024 — D1 Crawl Store and Async Run Core` keeps the local Node crawl entry and adds a runtime-neutral async loop plus a D1 crawl store. The store covers `business_leads` and `single_page_crawl_evidence` only. Miniflare module mode is test infrastructure. It is not a deployed module Worker. There is no production D1 database, Worker, Cron, or deployment. The local Node crawler still runs.
+`DQ-024 — D1 Crawl Store and Async Run Core` keeps the local Node crawl entry and adds a runtime-neutral async loop plus a D1 crawl store. The store covers `business_leads` and `single_page_crawl_evidence` only. Miniflare module mode is test infrastructure. It is not a deployed module Worker. DQ-024 does not deploy a Worker, add Cron, create a production D1 database, or perform a deployment. The local Node crawler still runs.
 
-### DQ-025 — Worker Pinned Transport and Scheduled Runner
+### DQ-025 — GitHub Actions Scheduled Crawl Runner and D1 Worker Gateway
 
-**Status: Blocked / Unstarted**
+**Status: Repository implementation exists; production activation pending**
 
-`DQ-025 — Worker Pinned Transport and Scheduled Runner` has not started. Workers still cannot pin HTTPS for arbitrary public sites. Phase 2 is not completed. Cloudflare autonomous crawling is not yet enabled. Later Phase 2 work still owns a controlled operator entry. Phase 3 — Website Analysis remains planned. No later implementation item is active.
+`DQ-025 — GitHub Actions Scheduled Crawl Runner and D1 Worker Gateway` is implemented in the repository and is not production-complete. Production activation has not been performed. Production D1, the Worker deploy, the Worker secret, and the GitHub Actions crawl run are still human-controlled and have not been performed. Phase 2 — Website Crawling remains current and is not completed. Cloudflare autonomous crawling is not yet enabled. Phase 3 — Website Analysis remains planned.
 
 ## Phase 3 — Website Analysis
 
@@ -226,8 +226,8 @@ DQ-023 — Bounded Single-Page Crawl Run: Completed.
 
 DQ-024 — D1 Crawl Store and Async Run Core: Completed.
 
-DQ-025 — Worker Pinned Transport and Scheduled Runner: Blocked / Unstarted.
+DQ-025 — GitHub Actions Scheduled Crawl Runner and D1 Worker Gateway: Repository implementation exists; production activation has not been performed.
 
 ## Next Planned Step
 
-Phase 2 — Website Crawling is current and is not completed. DQ-020 — One-Page Pinned Crawl Fetch is completed. DQ-021 — Lead-Linked Single-Page Crawl Evidence is completed. DQ-022 — Persisted Single-Page Crawl Evidence is completed. DQ-023 — Bounded Single-Page Crawl Run is completed. DQ-024 — D1 Crawl Store and Async Run Core is completed. DQ-025 — Worker Pinned Transport and Scheduled Runner is blocked and unstarted. Cloudflare autonomous crawling is not yet enabled. Later Phase 2 work still owns a controlled operator entry. Phase 3 — Website Analysis remains planned. No later implementation item is active.
+Phase 2 — Website Crawling is current and is not completed. DQ-020 — One-Page Pinned Crawl Fetch is completed. DQ-021 — Lead-Linked Single-Page Crawl Evidence is completed. DQ-022 — Persisted Single-Page Crawl Evidence is completed. DQ-023 — Bounded Single-Page Crawl Run is completed. DQ-024 — D1 Crawl Store and Async Run Core is completed. `DQ-025 — GitHub Actions Scheduled Crawl Runner and D1 Worker Gateway` is implemented in the repository and is not production-complete. Production activation has not been performed. Production D1, the Worker deploy, the Worker secret, and the GitHub Actions crawl run are still human-controlled and have not been performed. Cloudflare autonomous crawling is not yet enabled. Phase 3 — Website Analysis remains planned. No later implementation item is active.

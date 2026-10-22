@@ -2,7 +2,7 @@
 
 ## Current Status
 
-Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is completed. DQ-010, DQ-011, DQ-012, DQ-013, DQ-014, and DQ-015 are completed. Phase 2 — Website Crawling is current and is not completed. DQ-020 — One-Page Pinned Crawl Fetch is completed. DQ-021 — Lead-Linked Single-Page Crawl Evidence is completed. DQ-022 — Persisted Single-Page Crawl Evidence is completed. DQ-023 — Bounded Single-Page Crawl Run is completed. DQ-024 — D1 Crawl Store and Async Run Core is completed. DQ-025 — Worker Pinned Transport and Scheduled Runner is blocked and unstarted. Cloudflare autonomous crawling is not yet enabled. Phase 3 — Website Analysis remains planned. No later implementation item is active.
+Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is completed. DQ-010, DQ-011, DQ-012, DQ-013, DQ-014, and DQ-015 are completed. Phase 2 — Website Crawling is current and is not completed. DQ-020 — One-Page Pinned Crawl Fetch is completed. DQ-021 — Lead-Linked Single-Page Crawl Evidence is completed. DQ-022 — Persisted Single-Page Crawl Evidence is completed. DQ-023 — Bounded Single-Page Crawl Run is completed. DQ-024 — D1 Crawl Store and Async Run Core is completed. `DQ-025 — GitHub Actions Scheduled Crawl Runner and D1 Worker Gateway` is implemented in the repository and is not production-complete. Production activation has not been performed. Cloudflare autonomous crawling is not yet enabled. Phase 3 — Website Analysis remains planned. No later implementation item is active.
 
 ## P0 — Foundation
 
@@ -126,15 +126,15 @@ Expose the completed discovery flow through one controlled command, `npm run dis
 
 **Status: Completed**
 
-`DQ-024 — D1 Crawl Store and Async Run Core` separates the bounded crawl loop from the Node database and adds a D1 store for `business_leads` and `single_page_crawl_evidence`. The local Node crawler still runs. Miniflare module mode is test infrastructure only and is not a deployed module Worker. There is no production D1 database, Worker, Cron, or deployment.
+`DQ-024 — D1 Crawl Store and Async Run Core` separates the bounded crawl loop from the Node database and adds a D1 store for `business_leads` and `single_page_crawl_evidence`. The local Node crawler still runs. Miniflare module mode is test infrastructure only and is not a deployed module Worker. DQ-024 does not deploy a Worker, add Cron, create a production D1 database, or perform a deployment.
 
-### DQ-025 — Worker Pinned Transport and Scheduled Runner
+### DQ-025 — GitHub Actions Scheduled Crawl Runner and D1 Worker Gateway
 
-**Status: Blocked / Unstarted**
+**Status: Repository implementation exists; production activation pending**
 
-`DQ-025 — Worker Pinned Transport and Scheduled Runner` has not started. Pinned HTTPS for arbitrary public sites is still unavailable. Cloudflare autonomous crawling is not yet enabled.
+`DQ-025 — GitHub Actions Scheduled Crawl Runner and D1 Worker Gateway` is implemented in the repository and is not production-complete. Production activation has not been performed. Production D1, the Worker deploy, the Worker secret, and the GitHub Actions crawl run are still human-controlled and have not been performed. Phase 2 — Website Crawling remains current and is not completed. Cloudflare autonomous crawling is not yet enabled. Phase 3 — Website Analysis remains planned.
 
-The remaining grouped crawling objective keeps the same safety rules: retrieve content from selected candidate websites using the network-target safety established by DQ-006. Crawling uses bounded HTTP behavior, manually validated redirects, and resource limits. One bounded run can now select leads and store each finished attempt. Later Phase 2 work still owns a controlled operator entry. The crawler gathers evidence but does not decide whether a business is qualified. The expected output is structured crawl results ready for website analysis.
+The crawl still uses the network-target safety established by DQ-006. Crawling uses bounded HTTP behavior, manually validated redirects, and resource limits. One bounded run selects leads and stores each finished attempt. The Worker does not fetch business websites. The crawler gathers evidence but does not decide whether a business is qualified. The expected output is structured crawl results ready for website analysis.
 
 ### DQ-030–039 — Website Analysis
 

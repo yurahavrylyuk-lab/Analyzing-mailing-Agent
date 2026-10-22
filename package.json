@@ -6,7 +6,8 @@
   "scripts": {
     "test": "node scripts/run-tests.cjs",
     "typecheck": "tsc --noEmit",
-    "discover": "node scripts/run-discovery.cjs"
+    "discover": "node scripts/run-discovery.cjs",
+    "crawl:cloud": "node scripts/run-crawl-cloud.cjs"
   },
   "keywords": [],
   "author": "",
