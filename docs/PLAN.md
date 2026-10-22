@@ -140,13 +140,19 @@ The production crawl workflow is active at cron `17 6 * * *` with timezone `Euro
 
 **Expected output:** Reviewable `WebsiteAudit` information and supporting evidence that qualification can consume.
 
-Phase 3 is current and is not complete. DQ-030 is completed. DQ-031–039 remain planned. Analysis remains separate from contact and outreach. Replaceable AI-backed analysis may be introduced behind defined interfaces in later design work, but no AI website analysis exists yet.
+Phase 3 is current and is not complete. DQ-030 and DQ-031 are completed. DQ-032–039 remain planned. Analysis remains separate from contact and outreach. Replaceable AI-backed analysis may be introduced behind defined interfaces in later design work, but no real AI website analysis exists yet. A validator is not AI analysis.
 
 ### DQ-030 — Deterministic Website Facts
 
 **Status: Completed**
 
 `DQ-030 — Deterministic Website Facts` consumes one persisted fetched crawl evidence record. `extractWebsiteFacts` returns one frozen deterministic `WebsiteFacts` value. It extracts metadata and objective structural facts, and creates cleaned visible text capped at 12,000 UTF-16 code units. Failed evidence is rejected with `WebsiteFactsError` and code `EVIDENCE_NOT_ANALYZABLE`. It uses stored HTML only. It performs no network request, no AI analysis, no persistence, no qualification, and no outreach.
+
+### DQ-031 — Provider-Neutral Website Analysis Contract
+
+**Status: Completed**
+
+`DQ-031 — Provider-Neutral Website Analysis Contract` validates one untrusted candidate against one `WebsiteFacts` value. `validateWebsiteAnalysis` returns one frozen provider-neutral `WebsiteAnalysis`, or throws `WebsiteAnalysisError`. Categories are design, usability, seo, accessibility, and conversion. Severities are low, medium, and high. Every finding requires evidence. At most 8 findings are accepted, and at most 3 findings are accepted in one category. Identity must match the supplied `WebsiteFacts`. It performs no AI call. It does not add a provider adapter, real AI analysis, fallback routing, 50/day enforcement, persistence, qualification, contacts, or outreach.
 
 ## Phase 4 — Qualification
 
@@ -240,10 +246,12 @@ DQ-024 — D1 Crawl Store and Async Run Core: Completed.
 
 DQ-025 — GitHub Actions Scheduled Crawl Runner and D1 Worker Gateway: Completed. Production activation was verified through GitHub Actions run 39773510876.
 
-Phase 3 — Website Analysis: Current. DQ-030 is completed. DQ-031–039 remain planned.
+Phase 3 — Website Analysis: Current. DQ-030 and DQ-031 are completed. DQ-032–039 remain planned.
 
 DQ-030 — Deterministic Website Facts: Completed.
 
+DQ-031 — Provider-Neutral Website Analysis Contract: Completed.
+
 ## Next Planned Step
 
-Phase 3 — Website Analysis is current and is not complete. DQ-030 is completed. DQ-031–039 remain planned. The next planned step is the provider-neutral AI website-analysis slice: deterministic `WebsiteFacts`, then provider-neutral AI analysis. The approved future free-only fallback order is Gemini, then Groq, then Cloudflare Workers AI, then OpenRouter. That slice is planned and is not implemented. No AI website analysis exists yet. DQ-020 through DQ-025 are completed. Discovery still uses local SQLite and does not feed production D1 automatically. Scheduled crawling of an eligible production D1 lead does not require the Mac.
+Phase 3 — Website Analysis is current and is not complete. DQ-030 and DQ-031 are completed. DQ-032–039 remain planned. The next planned step is the first real AI provider adapter, with Gemini first. That adapter is planned and is not implemented. The future flow is deterministic `WebsiteFacts`, then the first provider adapter, then an unknown candidate, then `validateWebsiteAnalysis()`, then `WebsiteAnalysis`. The broader free-only fallback order remains Gemini, then Groq, then Cloudflare Workers AI, then OpenRouter, and that routing is not implemented. No real AI website analysis exists yet. A validator is not AI analysis. DQ-020 through DQ-025 are completed. Discovery still uses local SQLite and does not feed production D1 automatically. Scheduled crawling of an eligible production D1 lead does not require the Mac.

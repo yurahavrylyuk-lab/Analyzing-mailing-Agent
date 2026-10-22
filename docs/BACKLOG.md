@@ -2,7 +2,7 @@
 
 ## Current Status
 
-Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is completed. DQ-010, DQ-011, DQ-012, DQ-013, DQ-014, and DQ-015 are completed. Phase 2 — Website Crawling is completed. DQ-020 through DQ-025 are completed. Production activation was verified through GitHub Actions run 39773510876. Discovery still uses local SQLite and does not feed production D1 automatically. The autonomous path is an eligible production D1 lead, then the scheduled GitHub Actions crawl, then production D1 evidence. Phase 3 — Website Analysis is current and is not complete. DQ-030 — Deterministic Website Facts is completed. DQ-031–039 remain planned. The next planned step is the provider-neutral AI website-analysis slice: deterministic `WebsiteFacts`, then provider-neutral AI analysis. The approved future free-only fallback order is Gemini, then Groq, then Cloudflare Workers AI, then OpenRouter. That slice is planned and is not implemented. No AI website analysis exists yet.
+Phase 0 — Foundation is completed. Phase 1 — Lead Discovery is completed. DQ-010, DQ-011, DQ-012, DQ-013, DQ-014, and DQ-015 are completed. Phase 2 — Website Crawling is completed. DQ-020 through DQ-025 are completed. Production activation was verified through GitHub Actions run 39773510876. Discovery still uses local SQLite and does not feed production D1 automatically. The autonomous path is an eligible production D1 lead, then the scheduled GitHub Actions crawl, then production D1 evidence. Phase 3 — Website Analysis is current and is not complete. DQ-030 — Deterministic Website Facts is completed. DQ-031 — Provider-Neutral Website Analysis Contract is completed. DQ-032–039 remain planned. The next planned step is the first real AI provider adapter, with Gemini first. That adapter is planned and is not implemented. The future flow is deterministic `WebsiteFacts`, then the first provider adapter, then an unknown candidate, then `validateWebsiteAnalysis()`, then `WebsiteAnalysis`. The broader free-only fallback order remains Gemini, then Groq, then Cloudflare Workers AI, then OpenRouter, and that routing is not implemented. No real AI website analysis exists yet. A validator is not AI analysis.
 
 ## P0 — Foundation
 
@@ -144,11 +144,17 @@ The crawl still uses the network-target safety established by DQ-006. Crawling u
 
 `DQ-030 — Deterministic Website Facts` consumes one persisted fetched crawl evidence record. `extractWebsiteFacts` returns one frozen deterministic `WebsiteFacts` value. It extracts metadata and objective structural facts, and creates cleaned visible text capped at 12,000 UTF-16 code units. Failed evidence is rejected with `WebsiteFactsError` and code `EVIDENCE_NOT_ANALYZABLE`. It uses stored HTML only. It performs no network request, no AI analysis, no persistence, no qualification, and no outreach.
 
-### DQ-031–039 — Website Analysis
+### DQ-031 — Provider-Neutral Website Analysis Contract
+
+**Status: Completed**
+
+`DQ-031 — Provider-Neutral Website Analysis Contract` validates one untrusted candidate against one `WebsiteFacts` value. `validateWebsiteAnalysis` returns one frozen provider-neutral `WebsiteAnalysis`, or throws `WebsiteAnalysisError`. Categories are design, usability, seo, accessibility, and conversion. Severities are low, medium, and high. Every finding requires evidence. At most 8 findings are accepted, and at most 3 findings are accepted in one category. Identity must match the supplied `WebsiteFacts`. It performs no AI call. It does not add a provider adapter, real AI analysis, fallback routing, 50/day enforcement, persistence, qualification, contacts, or outreach. No real AI website analysis exists yet. A validator is not AI analysis.
+
+### DQ-032–039 — Website Analysis
 
 **Status: Planned**
 
-Phase 3 — Website Analysis remains current and is not complete. DQ-031–039 remain planned. The next planned step is the provider-neutral AI website-analysis slice: deterministic `WebsiteFacts`, then provider-neutral AI analysis. The approved future free-only fallback order is Gemini, then Groq, then Cloudflare Workers AI, then OpenRouter. That slice is planned and is not implemented. No AI website analysis exists yet. Later analysis may inspect stored crawl evidence for outdated design, poor usability, missing functionality, or other potential improvement opportunities, and produce structured observations linked to supporting evidence. The expected output is website audit information for qualification, not contact or outreach activity.
+Phase 3 — Website Analysis remains current and is not complete. DQ-032–039 remain planned. The next planned step is the first real AI provider adapter, with Gemini first. That adapter is planned and is not implemented. The future flow is deterministic `WebsiteFacts`, then the first provider adapter, then an unknown candidate, then `validateWebsiteAnalysis()`, then `WebsiteAnalysis`. The broader free-only fallback order remains Gemini, then Groq, then Cloudflare Workers AI, then OpenRouter, and that routing is not implemented. No real AI website analysis exists yet. A validator is not AI analysis. Later analysis may inspect stored crawl evidence for outdated design, poor usability, missing functionality, or other potential improvement opportunities, and produce structured observations linked to supporting evidence. The expected output is website audit information for qualification, not contact or outreach activity.
 
 ### DQ-040–043 — Qualification
 
