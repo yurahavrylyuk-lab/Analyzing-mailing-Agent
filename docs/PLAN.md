@@ -140,7 +140,7 @@ The production crawl workflow is active at cron `17 6 * * *` with timezone `Euro
 
 **Expected output:** Reviewable `WebsiteAudit` information and supporting evidence that qualification can consume.
 
-Phase 3 is current and is not complete. DQ-030 and DQ-031 are completed. DQ-032–039 remain planned. Analysis remains separate from contact and outreach. Replaceable AI-backed analysis may be introduced behind defined interfaces in later design work, but no real AI website analysis exists yet. A validator is not AI analysis.
+Phase 3 is current and is not complete. DQ-030, DQ-031, and DQ-032 are completed. DQ-033–039 remain planned. Analysis remains separate from contact and outreach. Single-website Gemini analysis now exists: one `WebsiteFacts` value can be analyzed through direct REST, transport-only Flash-model fallback, and `validateWebsiteAnalysis()`. Multi-website analysis, the 90-second retry, persistence, cross-provider fallback, qualification, contacts, and outreach do not exist yet. A validator is not AI analysis.
 
 ### DQ-030 — Deterministic Website Facts
 
@@ -153,6 +153,12 @@ Phase 3 is current and is not complete. DQ-030 and DQ-031 are completed. DQ-032�
 **Status: Completed**
 
 `DQ-031 — Provider-Neutral Website Analysis Contract` validates one untrusted candidate against one `WebsiteFacts` value. `validateWebsiteAnalysis` returns one frozen provider-neutral `WebsiteAnalysis`, or throws `WebsiteAnalysisError`. Categories are design, usability, seo, accessibility, and conversion. Severities are low, medium, and high. Every finding requires evidence. At most 8 findings are accepted, and at most 3 findings are accepted in one category. Identity must match the supplied `WebsiteFacts`. It performs no AI call. It does not add a provider adapter, real AI analysis, fallback routing, 50/day enforcement, persistence, qualification, contacts, or outreach.
+
+### DQ-032 — Gemini Website Analysis Adapter
+
+**Status: Completed**
+
+`DQ-032 — Gemini Website Analysis Adapter` analyzes one `WebsiteFacts` value with Gemini through direct REST. It uses transport-only fallback across `gemini-3.8-flash`, `gemini-3.6-flash`, `gemini-3.5-flash-lite`, and `gemini-3.1-flash-lite`, validates the candidate with `validateWebsiteAnalysis()`, and returns one `WebsiteAnalysis` plus provider, model, and attempted models. It does not add a multi-website run, a 90-second retry, a 50/day budget, persistence, cross-provider fallback, qualification, contacts, or outreach.
 
 ## Phase 4 — Qualification
 
@@ -246,12 +252,14 @@ DQ-024 — D1 Crawl Store and Async Run Core: Completed.
 
 DQ-025 — GitHub Actions Scheduled Crawl Runner and D1 Worker Gateway: Completed. Production activation was verified through GitHub Actions run 39773510876.
 
-Phase 3 — Website Analysis: Current. DQ-030 and DQ-031 are completed. DQ-032–039 remain planned.
+Phase 3 — Website Analysis: Current. DQ-030, DQ-031, and DQ-032 are completed. DQ-033–039 remain planned.
 
 DQ-030 — Deterministic Website Facts: Completed.
 
 DQ-031 — Provider-Neutral Website Analysis Contract: Completed.
 
+DQ-032 — Gemini Website Analysis Adapter: Completed.
+
 ## Next Planned Step
 
-Phase 3 — Website Analysis is current and is not complete. DQ-030 and DQ-031 are completed. DQ-032–039 remain planned. The next planned step is the first real AI provider adapter, with Gemini first. That adapter is planned and is not implemented. The future flow is deterministic `WebsiteFacts`, then the first provider adapter, then an unknown candidate, then `validateWebsiteAnalysis()`, then `WebsiteAnalysis`. The broader free-only fallback order remains Gemini, then Groq, then Cloudflare Workers AI, then OpenRouter, and that routing is not implemented. No real AI website analysis exists yet. A validator is not AI analysis. DQ-020 through DQ-025 are completed. Discovery still uses local SQLite and does not feed production D1 automatically. Scheduled crawling of an eligible production D1 lead does not require the Mac.
+Phase 3 — Website Analysis is current and is not complete. DQ-030, DQ-031, and DQ-032 are completed. DQ-033–039 remain planned. Single-website Gemini analysis now exists. The next planned step is DQ-033, the bounded multi-website analysis run plus the deferred 90-second retry. That run is not implemented. Multi-website analysis, the 90-second retry, persistence, cross-provider fallback, qualification, contacts, and outreach do not exist yet. Groq, Cloudflare Workers AI, and OpenRouter remain unimplemented. DQ-020 through DQ-025 are completed. Discovery still uses local SQLite and does not feed production D1 automatically. Scheduled crawling of an eligible production D1 lead does not require the Mac.

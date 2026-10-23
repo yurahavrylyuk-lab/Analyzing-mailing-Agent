@@ -1,4 +1,4 @@
-import { DiscoveryConfigurationError } from "./errors";
+import { DiscoveryConfigurationError, WebsiteAnalysisConfigurationError } from "./errors";
 
 export const APPLICATION_ENVIRONMENTS = [
   "development",
@@ -21,6 +21,15 @@ export type DiscoveryConfig =
       apiKey: string;
     }>;
 
+export type WebsiteAnalysisConfig =
+  | Readonly<{ provider: "disabled" }>
+  | GeminiWebsiteAnalysisConfig;
+
+export type GeminiWebsiteAnalysisConfig = Readonly<{
+  provider: "gemini";
+  apiKey: string;
+}>;
+
 export type EnvironmentVariables = Readonly<Record<string, string | undefined>>;
 
 export interface AppConfig {
@@ -30,6 +39,7 @@ export interface AppConfig {
     url: SQLiteDatabaseUrl;
   }>;
   readonly discovery: DiscoveryConfig;
+  readonly websiteAnalysis: WebsiteAnalysisConfig;
 }
 
 const defaultLogLevels: Readonly<Record<ApplicationEnvironment, LogLevel>> = {
@@ -115,6 +125,30 @@ function parseDiscoveryConfig(
   return Object.freeze({ provider: "geoapify", apiKey });
 }
 
+function parseWebsiteAnalysisConfig(
+  environment: EnvironmentVariables,
+): WebsiteAnalysisConfig {
+  const provider = environment.WEBSITE_ANALYSIS_PROVIDER;
+
+  if (provider === undefined || provider === "disabled") {
+    return Object.freeze({ provider: "disabled" });
+  }
+
+  if (provider !== "gemini") {
+    throw new WebsiteAnalysisConfigurationError("INVALID_PROVIDER");
+  }
+
+  const apiKey = environment.GEMINI_API_KEY;
+  if (apiKey === undefined) {
+    throw new WebsiteAnalysisConfigurationError("MISSING_GEMINI_API_KEY");
+  }
+  if (apiKey.length === 0 || whitespaceOrControlCharacterPattern.test(apiKey)) {
+    throw new WebsiteAnalysisConfigurationError("INVALID_GEMINI_API_KEY");
+  }
+
+  return Object.freeze({ provider: "gemini", apiKey });
+}
+
 /**
  * Parses application settings without performing I/O or activating providers.
  */
@@ -135,11 +169,13 @@ export function loadConfig(environment: EnvironmentVariables): AppConfig {
     url: parseDatabaseUrl(appEnvironment, environment.DATABASE_URL),
   });
   const discovery = parseDiscoveryConfig(environment);
+  const websiteAnalysis = parseWebsiteAnalysisConfig(environment);
 
   return Object.freeze({
     environment: appEnvironment,
     logLevel,
     database,
     discovery,
+    websiteAnalysis,
   });
 }
