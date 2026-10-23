@@ -14,3 +14,15 @@ export type {
   WebsiteAnalysisFinding,
   WebsiteAnalysisSeverity,
 } from "./analysis";
+export {
+  GEMINI_MODELS,
+  GEMINI_WEBSITE_ANALYSIS_ERROR_CODES,
+  GeminiWebsiteAnalysisError,
+  analyzeWebsiteWithGemini,
+} from "./providers/gemini";
+export type {
+  GeminiModel,
+  GeminiWebsiteAnalysisErrorCode,
+  GeminiWebsiteAnalysisOptions,
+  GeminiWebsiteAnalysisResult,
+} from "./providers/gemini";

@@ -3,6 +3,7 @@ import { test } from "node:test";
 
 import {
   DiscoveryConfigurationError,
+  WebsiteAnalysisConfigurationError,
   loadConfig,
 } from "../../src/config";
 
@@ -14,10 +15,12 @@ test("uses development defaults for an empty environment", () => {
     logLevel: "debug",
     database: { url: "file:./data/delta-qoralis.sqlite" },
     discovery: { provider: "disabled" },
+    websiteAnalysis: { provider: "disabled" },
   });
   assert.ok(Object.isFrozen(config));
   assert.ok(Object.isFrozen(config.database));
   assert.ok(Object.isFrozen(config.discovery));
+  assert.ok(Object.isFrozen(config.websiteAnalysis));
 });
 
 test("parses valid environment and log level values", () => {
@@ -28,6 +31,7 @@ test("parses valid environment and log level values", () => {
     logLevel: "error",
     database: { url: "file::memory:" },
     discovery: { provider: "disabled" },
+    websiteAnalysis: { provider: "disabled" },
   });
 });
 
@@ -278,6 +282,107 @@ test("configuration parsing performs no provider or network operation", () => {
       }).discovery,
       { provider: "geoapify", apiKey: "synthetic-offline-key" },
     );
+    assert.equal(fetchCalls, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("missing website analysis provider is disabled", () => {
+  const websiteAnalysis = loadConfig({}).websiteAnalysis;
+  assert.deepEqual(websiteAnalysis, { provider: "disabled" });
+  assert.equal("apiKey" in websiteAnalysis, false);
+  assert.ok(Object.isFrozen(websiteAnalysis));
+});
+
+test("explicit disabled website analysis ignores a malformed Gemini key", () => {
+  for (const apiKey of ["", "   ", "bad key", "bad\u0000key", "synthetic-unused-gemini-key"]) {
+    const config = loadConfig({
+      WEBSITE_ANALYSIS_PROVIDER: "disabled",
+      GEMINI_API_KEY: apiKey,
+    });
+    assert.deepEqual(config.websiteAnalysis, { provider: "disabled" });
+    assert.equal("apiKey" in config.websiteAnalysis, false);
+    if (apiKey.length > 0) assert.equal(JSON.stringify(config).includes(apiKey), false);
+  }
+});
+
+test("a Gemini key alone does not activate website analysis", () => {
+  const config = loadConfig({ GEMINI_API_KEY: "synthetic-gemini-key" });
+  assert.deepEqual(config.websiteAnalysis, { provider: "disabled" });
+  assert.equal(JSON.stringify(config).includes("synthetic-gemini-key"), false);
+});
+
+test("gemini plus a valid key is enabled and frozen", () => {
+  const apiKey = "synthetic.Gemini_key-42";
+  const config = loadConfig({
+    WEBSITE_ANALYSIS_PROVIDER: "gemini",
+    GEMINI_API_KEY: apiKey,
+  });
+  assert.deepEqual(config.websiteAnalysis, { provider: "gemini", apiKey });
+  assert.ok(Object.isFrozen(config));
+  assert.ok(Object.isFrozen(config.websiteAnalysis));
+});
+
+test("gemini requires its own key", () => {
+  assert.throws(
+    () => loadConfig({ WEBSITE_ANALYSIS_PROVIDER: "gemini", GEOAPIFY_API_KEY: "other-key" }),
+    (error: unknown) => {
+      assert.ok(error instanceof WebsiteAnalysisConfigurationError);
+      assert.equal(error.code, "MISSING_GEMINI_API_KEY");
+      assert.equal(error.message, "GEMINI_API_KEY is required when website analysis provider is gemini.");
+      assert.equal(error.message.includes("other-key"), false);
+      return true;
+    },
+  );
+});
+
+test("rejects an empty, whitespace, or control Gemini key without echoing it", () => {
+  const invalidKeys = ["", "   ", " padded", "padded ", "two words", "line\nbreak", "tab\tkey", "nul\u0000key", "delete\u007fkey"];
+  for (const apiKey of invalidKeys) {
+    assert.throws(
+      () => loadConfig({ WEBSITE_ANALYSIS_PROVIDER: "gemini", GEMINI_API_KEY: apiKey }),
+      (error: unknown) => {
+        assert.ok(error instanceof WebsiteAnalysisConfigurationError);
+        assert.equal(error.code, "INVALID_GEMINI_API_KEY");
+        assert.equal(error.message, "GEMINI_API_KEY is invalid.");
+        if (apiKey.length > 0) {
+          assert.equal(error.message.includes(apiKey), false);
+          assert.equal(JSON.stringify(error).includes(apiKey), false);
+        }
+        return true;
+      },
+    );
+  }
+});
+
+test("rejects an unknown website analysis provider without echoing it", () => {
+  for (const provider of ["", "   ", " gemini", "gemini ", "Gemini", "GEMINI", "not-gemini", "groq", "unknown-provider-sentinel"]) {
+    assert.throws(
+      () => loadConfig({ WEBSITE_ANALYSIS_PROVIDER: provider, GEMINI_API_KEY: "bad key" }),
+      (error: unknown) => {
+        assert.ok(error instanceof WebsiteAnalysisConfigurationError);
+        assert.equal(error.code, "INVALID_PROVIDER");
+        assert.equal(error.message, "Invalid WEBSITE_ANALYSIS_PROVIDER. Expected disabled or gemini.");
+        assert.equal(error.message.includes("bad key"), false);
+        assert.equal(error.message.includes("unknown-provider-sentinel"), false);
+        assert.equal(error.message.includes("not-gemini"), false);
+        assert.equal(error.message.includes("Gemini"), false);
+        return true;
+      },
+    );
+  }
+});
+
+test("website analysis configuration parsing does not call fetch", () => {
+  const originalFetch = globalThis.fetch;
+  let fetchCalls = 0;
+  globalThis.fetch = (() => {
+    fetchCalls += 1;
+    throw new Error("network access is forbidden during configuration parsing");
+  }) as typeof fetch;
+  try {
+    loadConfig({ WEBSITE_ANALYSIS_PROVIDER: "gemini", GEMINI_API_KEY: "synthetic-offline-key" });
     assert.equal(fetchCalls, 0);
   } finally {
     globalThis.fetch = originalFetch;
