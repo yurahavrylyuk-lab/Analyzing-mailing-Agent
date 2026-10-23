@@ -140,7 +140,7 @@ The production crawl workflow is active at cron `17 6 * * *` with timezone `Euro
 
 **Expected output:** Reviewable `WebsiteAudit` information and supporting evidence that qualification can consume.
 
-Phase 3 is current and is not complete. DQ-030, DQ-031, DQ-032, and DQ-033 are completed. DQ-034–039 remain planned. Analysis remains separate from contact and outreach. Single-website Gemini analysis exists, and DQ-033 provides a bounded run for an explicit `WebsiteFacts[]` input. One run accepts 0–50 unique `evidenceId` values. Analysis is strictly sequential. Known per-website failures stay on that website. Only `GEMINI_TRANSPORT_UNAVAILABLE` is deferred, and that website is retried once, no earlier than its first transport failure plus 90 seconds, in one retry round only. The run returns ordered terminal results. 50/run is not 50/day. DQ-033 does not select crawl evidence from D1, load crawl evidence from SQLite, persist website analyses, implement daily accounting, add concurrency, add cross-provider fallback, qualify leads, discover contacts, or perform outreach. A validator is not AI analysis.
+Phase 3 is current and is not complete. DQ-030, DQ-031, DQ-032, DQ-033, and DQ-034 are completed. DQ-035–039 remain planned. Analysis remains separate from contact and outreach. Single-website Gemini analysis exists, and DQ-033 provides a bounded run for an explicit `WebsiteFacts[]` input. One run accepts 0–50 unique `evidenceId` values. Analysis is strictly sequential. Known per-website failures stay on that website. Only `GEMINI_TRANSPORT_UNAVAILABLE` is deferred, and that website is retried once, no earlier than its first transport failure plus 90 seconds, in one retry round only. The run returns ordered terminal results. 50/run is not 50/day. DQ-034 persists one successful Gemini analysis in append-only D1 when the referenced fetched crawl evidence matches exactly. It does not add SQLite analysis persistence, wire DQ-033 to persistence, select evidence, schedule analysis, add a Worker endpoint, qualify leads, discover contacts, or perform outreach. DQ-033 does not select crawl evidence from D1, load crawl evidence from SQLite, persist website analyses, implement daily accounting, add concurrency, or add cross-provider fallback. The next Phase 3 slice begins with DQ-035 and has not yet been architected. A validator is not AI analysis.
 
 ### DQ-030 — Deterministic Website Facts
 
@@ -165,6 +165,12 @@ Phase 3 is current and is not complete. DQ-030, DQ-031, DQ-032, and DQ-033 are c
 **Status: Completed**
 
 `DQ-033 — Bounded Website Analysis Run` provides an explicit `WebsiteFacts[]` input and runs it through `analyzeWebsiteWithGemini`. One run accepts 0–50 unique `evidenceId` values. More than 50 items, or a duplicate `evidenceId`, rejects the whole run. Analysis is strictly sequential. Known per-website failures, including known Gemini failures and `WebsiteAnalysisError`, stay on that website and do not stop the next website. Only `GEMINI_TRANSPORT_UNAVAILABLE` is deferred. That website is retried once, no earlier than its first transport failure plus 90 seconds, and only after the first pass finishes. There is one retry round only. The run returns ordered terminal results in original input order. 50/run is not 50/day. DQ-033 does not select crawl evidence from D1, load crawl evidence from SQLite, persist website analyses, implement daily accounting, add concurrency, add cross-provider fallback, qualify leads, discover contacts, or perform outreach.
+
+### DQ-034 — D1 Website Analysis Persistence
+
+**Status: Completed**
+
+D1 is the authoritative website-analysis store. `persistD1WebsiteAnalysis()` persists one successful `GeminiWebsiteAnalysisResult`. The referenced `single_page_crawl_evidence` row must exist and have `outcome = 'fetched'`. `evidenceId`, `leadId`, and `leadVersion` must match exactly. `website_analyses` is append-only. Multiple analyses for the same evidence are allowed. Successful analysis plus Gemini provenance is stored: summary, findings, provider, successful model, attempted models, and explicit `storedAt`. Findings and attempted models are stored as JSON text and validated on read-back. INSERT metadata and the persisted row are verified before returning a frozen `StoredWebsiteAnalysis`. DQ-034 does not add SQLite analysis persistence, DQ-033 wiring, selection, scheduler, Worker endpoint, qualification, contacts, or outreach.
 
 ## Phase 4 — Qualification
 
@@ -258,7 +264,7 @@ DQ-024 — D1 Crawl Store and Async Run Core: Completed.
 
 DQ-025 — GitHub Actions Scheduled Crawl Runner and D1 Worker Gateway: Completed. Production activation was verified through GitHub Actions run 39773510876.
 
-Phase 3 — Website Analysis: Current. DQ-030, DQ-031, DQ-032, and DQ-033 are completed. DQ-034–039 remain planned.
+Phase 3 — Website Analysis: Current. DQ-030, DQ-031, DQ-032, DQ-033, and DQ-034 are completed. DQ-035–039 remain planned.
 
 DQ-030 — Deterministic Website Facts: Completed.
 
@@ -268,6 +274,8 @@ DQ-032 — Gemini Website Analysis Adapter: Completed.
 
 DQ-033 — Bounded Website Analysis Run: Completed.
 
+DQ-034 — D1 Website Analysis Persistence: Completed.
+
 ## Next Planned Step
 
-Phase 3 — Website Analysis is current and is not complete. DQ-030, DQ-031, DQ-032, and DQ-033 are completed. DQ-034–039 remain planned. DQ-033 now provides explicit `WebsiteFacts[]` input, 0–50 unique `evidenceId` values per run, strict sequential analysis, per-website known failure isolation, one deferred retry after `GEMINI_TRANSPORT_UNAVAILABLE`, a retry no earlier than that item's first transport failure plus 90 seconds, one retry round only, and ordered terminal results. 50/run is not 50/day. DQ-033 does not select crawl evidence from D1, load crawl evidence from SQLite, persist website analyses, implement daily accounting, add concurrency, add cross-provider fallback, qualify leads, discover contacts, or perform outreach. The next planned step is DQ-034, analysis persistence and selected provenance. DQ-034 is not implemented. Groq, Cloudflare Workers AI, and OpenRouter remain unimplemented. DQ-020 through DQ-025 are completed. Discovery still uses local SQLite and does not feed production D1 automatically. Scheduled crawling of an eligible production D1 lead does not require the Mac.
+Phase 3 — Website Analysis is current and is not complete. DQ-030, DQ-031, DQ-032, DQ-033, and DQ-034 are completed. DQ-035–039 remain planned. The next Phase 3 slice begins with DQ-035 and has not yet been architected. DQ-034 persists one successful `GeminiWebsiteAnalysisResult` in append-only D1 `website_analyses` when the referenced fetched crawl evidence matches `evidenceId`, `leadId`, and `leadVersion` exactly. Findings and attempted models are stored as JSON text and validated on read-back. DQ-034 does not add SQLite analysis persistence and does not wire DQ-033 to persistence automatically. There is still no automatic D1 analysis selection or orchestration, no scheduler, and no Worker analysis endpoint. There is still no 50/day accounting. There is still no qualification. There are still no contacts or outreach. Groq, Cloudflare Workers AI, and OpenRouter remain unimplemented. DQ-020 through DQ-025 are completed. Discovery still uses local SQLite and does not feed production D1 automatically. Scheduled crawling of an eligible production D1 lead does not require the Mac.
