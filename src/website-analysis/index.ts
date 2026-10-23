@@ -36,3 +36,10 @@ export type {
   WebsiteAnalysisRunItem,
   WebsiteAnalysisRunOptions,
 } from "./run";
+export { WebsiteAnalysisPersistenceError } from "./persistence-errors";
+export type { WebsiteAnalysisPersistenceErrorCode } from "./persistence-errors";
+export { persistD1WebsiteAnalysis } from "./d1-analysis-store";
+export type {
+  D1WebsiteAnalysisDatabase,
+  StoredWebsiteAnalysis,
+} from "./d1-analysis-store";
