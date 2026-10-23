@@ -43,3 +43,11 @@ export type {
   D1WebsiteAnalysisDatabase,
   StoredWebsiteAnalysis,
 } from "./d1-analysis-store";
+export { D1WebsiteAnalysisPipelineError } from "./pipeline-errors";
+export type { D1WebsiteAnalysisPipelineErrorCode } from "./pipeline-errors";
+export { runD1WebsiteAnalysisPipeline } from "./d1-analysis-pipeline";
+export type {
+  D1WebsiteAnalysisPipelineDatabase,
+  D1WebsiteAnalysisPipelineOptions,
+  D1WebsiteAnalysisPipelineResult,
+} from "./d1-analysis-pipeline";
