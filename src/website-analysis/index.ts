@@ -26,3 +26,13 @@ export type {
   GeminiWebsiteAnalysisOptions,
   GeminiWebsiteAnalysisResult,
 } from "./providers/gemini";
+export {
+  WEBSITE_ANALYSIS_RUN_ERROR_CODES,
+  WebsiteAnalysisRunError,
+  runWebsiteAnalysis,
+} from "./run";
+export type {
+  WebsiteAnalysisRunErrorCode,
+  WebsiteAnalysisRunItem,
+  WebsiteAnalysisRunOptions,
+} from "./run";
