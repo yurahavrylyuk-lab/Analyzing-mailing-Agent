@@ -1,20 +1,30 @@
 import { timingSafeEqual } from "node:crypto";
 
+import type { GeminiWebsiteAnalysisConfig } from "../config/env";
 import {
   persistD1CrawlEvidence,
   selectD1CrawlCandidates,
   type D1CrawlDatabase,
 } from "../crawler/d1-crawl-store";
 import { CrawlEvidencePersistenceError } from "../crawler/evidence-domain";
+import { runD1WebsiteAnalysisPipeline } from "../website-analysis/d1-analysis-pipeline";
 
 export type CrawlGatewayEnv = Readonly<{
   DB: D1CrawlDatabase;
   CRAWL_GATEWAY_TOKEN?: string;
+  ANALYSIS_GATEWAY_TOKEN?: string;
+  GEMINI_API_KEY?: string;
+}>;
+
+export type CrawlGatewayDependencies = Readonly<{
+  runPipeline?: typeof runD1WebsiteAnalysisPipeline;
 }>;
 
 const SELECT_PATH = "/internal/crawl/select";
 const EVIDENCE_PATH = "/internal/crawl/evidence";
+const ANALYSIS_PATH = "/internal/analysis/run";
 const MAX_BODY_BYTES = 3_145_728;
+const geminiKeyPattern = /[\s\u0000-\u001f\u007f-\u009f]/u;
 
 function jsonResponse(status: number, body: Readonly<Record<string, unknown>>): Response {
   return new Response(JSON.stringify(body), {
@@ -58,6 +68,16 @@ function hasExactlyKeys(value: Record<string, unknown>, allowed: readonly string
   );
 }
 
+function tokensMatch(configured: string, presented: string): boolean {
+  const secretBytes = Buffer.from(configured, "utf8");
+  const presentedBytes = Buffer.from(presented, "utf8");
+  if (secretBytes.length !== presentedBytes.length) {
+    return false;
+  }
+
+  return timingSafeEqual(secretBytes, presentedBytes);
+}
+
 function isAuthorized(request: Request, env: CrawlGatewayEnv): boolean {
   const secret = env.CRAWL_GATEWAY_TOKEN;
   if (typeof secret !== "string" || secret.length === 0) {
@@ -69,13 +89,34 @@ function isAuthorized(request: Request, env: CrawlGatewayEnv): boolean {
     return false;
   }
 
-  const secretBytes = Buffer.from(secret, "utf8");
-  const presentedBytes = Buffer.from(header.slice("Bearer ".length), "utf8");
-  if (secretBytes.length !== presentedBytes.length) {
+  return tokensMatch(secret, header.slice("Bearer ".length));
+}
+
+function isAnalysisAuthorized(request: Request, env: CrawlGatewayEnv): boolean {
+  const secret = env.ANALYSIS_GATEWAY_TOKEN;
+  if (typeof secret !== "string" || secret.length === 0) {
     return false;
   }
 
-  return timingSafeEqual(secretBytes, presentedBytes);
+  const header = request.headers.get("authorization");
+  if (header === null || !header.startsWith("Bearer ")) {
+    return false;
+  }
+
+  return tokensMatch(secret, header.slice("Bearer ".length));
+}
+
+function geminiConfigFromEnv(env: CrawlGatewayEnv): GeminiWebsiteAnalysisConfig | undefined {
+  const apiKey = env.GEMINI_API_KEY;
+  if (typeof apiKey !== "string" || apiKey.length === 0 || geminiKeyPattern.test(apiKey)) {
+    return undefined;
+  }
+
+  return Object.freeze({ provider: "gemini", apiKey });
+}
+
+function isMaxItems(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 50;
 }
 
 function hasJsonContentType(request: Request): boolean {
@@ -149,12 +190,46 @@ async function handleEvidence(parsed: unknown, env: CrawlGatewayEnv): Promise<Re
   return jsonResponse(200, { persisted: true });
 }
 
+async function handleAnalysis(
+  parsed: unknown,
+  env: CrawlGatewayEnv,
+  dependencies?: CrawlGatewayDependencies,
+): Promise<Response> {
+  if (!isRecord(parsed) || !hasExactlyKeys(parsed, ["maxItems"]) || !isMaxItems(parsed.maxItems)) {
+    return invalidRequest();
+  }
+
+  const geminiConfig = geminiConfigFromEnv(env);
+  if (geminiConfig === undefined) {
+    return internalError();
+  }
+
+  const runPipeline = dependencies?.runPipeline ?? runD1WebsiteAnalysisPipeline;
+  try {
+    const result = await runPipeline(env.DB, geminiConfig, parsed.maxItems);
+    return jsonResponse(200, {
+      selected: result.selected,
+      succeeded: result.succeeded,
+      failed: result.failed,
+      retried: result.retried,
+      persisted: result.persisted,
+    });
+  } catch {
+    return internalError();
+  }
+}
+
 export async function handleCrawlGatewayRequest(
   request: Request,
   env: CrawlGatewayEnv,
+  dependencies?: CrawlGatewayDependencies,
 ): Promise<Response> {
   const url = new URL(request.url);
-  if ((url.pathname !== SELECT_PATH && url.pathname !== EVIDENCE_PATH) || url.search !== "") {
+  const knownPath =
+    url.pathname === SELECT_PATH ||
+    url.pathname === EVIDENCE_PATH ||
+    url.pathname === ANALYSIS_PATH;
+  if (!knownPath || url.search !== "") {
     return notFound();
   }
 
@@ -162,7 +237,11 @@ export async function handleCrawlGatewayRequest(
     return methodNotAllowed();
   }
 
-  if (!isAuthorized(request, env)) {
+  if (url.pathname === ANALYSIS_PATH) {
+    if (!isAnalysisAuthorized(request, env)) {
+      return unauthorized();
+    }
+  } else if (!isAuthorized(request, env)) {
     return unauthorized();
   }
 
@@ -173,6 +252,10 @@ export async function handleCrawlGatewayRequest(
   const parsed = await readJsonBody(request);
   if (parsed instanceof Response) {
     return parsed;
+  }
+
+  if (url.pathname === ANALYSIS_PATH) {
+    return handleAnalysis(parsed, env, dependencies);
   }
 
   if (url.pathname === SELECT_PATH) {
