@@ -295,11 +295,86 @@ export async function handleCrawlGatewayRequest(
   return handleEvidence(parsed, env);
 }
 
+export function isWarsawDailyAnalysisTime(scheduledTime: number): boolean {
+  if (!Number.isFinite(scheduledTime)) {
+    return false;
+  }
+
+  const instant = new Date(scheduledTime);
+  if (Number.isNaN(instant.getTime())) {
+    return false;
+  }
+
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Europe/Warsaw",
+    hourCycle: "h23",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).formatToParts(instant);
+  const hour = parts.find((part) => part.type === "hour")?.value;
+  const minute = parts.find((part) => part.type === "minute")?.value;
+  return hour === "15" && minute === "00";
+}
+
+export type ScheduledAnalysisController = Readonly<{
+  scheduledTime: number;
+  cron?: string;
+}>;
+
+export async function handleScheduledAnalysis(
+  controller: ScheduledAnalysisController,
+  env: CrawlGatewayEnv,
+  dependencies?: CrawlGatewayDependencies,
+): Promise<void> {
+  const scheduledTime = controller.scheduledTime;
+  if (!Number.isFinite(scheduledTime) || Number.isNaN(new Date(scheduledTime).getTime())) {
+    throw new Error("Scheduled analysis failed.");
+  }
+  if (!isWarsawDailyAnalysisTime(scheduledTime)) {
+    return;
+  }
+
+  const config = geminiConfigFromEnv(env);
+  if (config === undefined) {
+    throw new Error("Scheduled analysis configuration is invalid.");
+  }
+
+  const runPipeline = dependencies?.runPipeline ?? runD1WebsiteAnalysisPipeline;
+  try {
+    const result = await runPipeline(env.DB, config, 50);
+    console.log(
+      JSON.stringify({
+        selected: result.selected,
+        succeeded: result.succeeded,
+        failed: result.failed,
+        retried: result.retried,
+        persisted: result.persisted,
+        utcDate: result.budget.utcDate,
+        websitesAdmitted: result.budget.websitesAdmitted,
+        websiteLimit: result.budget.websiteLimit,
+        geminiRequestsUsed: result.budget.geminiRequestsUsed,
+        geminiRequestLimit: result.budget.geminiRequestLimit,
+        stoppedReason: result.budget.stoppedReason,
+      }),
+    );
+  } catch {
+    throw new Error("Scheduled analysis failed.");
+  }
+}
+
 const worker: {
   fetch(request: Request, env: CrawlGatewayEnv): Promise<Response>;
+  scheduled(
+    controller: ScheduledAnalysisController,
+    env: CrawlGatewayEnv,
+    ctx: unknown,
+  ): Promise<void>;
 } = {
   fetch(request, env) {
     return handleCrawlGatewayRequest(request, env);
+  },
+  async scheduled(controller, env, ctx) {
+    await handleScheduledAnalysis(controller, env);
   },
 };
 
