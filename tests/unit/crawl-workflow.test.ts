@@ -42,8 +42,6 @@ test("wrangler config binds production DB and does not store the gateway token",
   }
   for (const absent of [
     "no_nodejs_compat",
-    "[triggers]",
-    "crons",
     "CRAWL_GATEWAY_TOKEN",
     "migrations apply",
     'database_id = "REPLACE_BEFORE_DEPLOY"',

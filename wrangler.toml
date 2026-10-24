@@ -7,3 +7,6 @@ compatibility_flags = [ "nodejs_compat" ]
 binding = "DB"
 database_name = "delta-qoralis-crawl"
 database_id = "59efef60-8acd-4277-b808-8220de5521eb"
+
+[triggers]
+crons = ["0 13 * * *", "0 14 * * *"]
