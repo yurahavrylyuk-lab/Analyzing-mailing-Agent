@@ -318,8 +318,9 @@ test("gemini plus a valid key is enabled and frozen", () => {
   const config = loadConfig({
     WEBSITE_ANALYSIS_PROVIDER: "gemini",
     GEMINI_API_KEY: apiKey,
+    GEMINI_DAILY_REQUEST_LIMIT: "10",
   });
-  assert.deepEqual(config.websiteAnalysis, { provider: "gemini", apiKey });
+  assert.deepEqual(config.websiteAnalysis, { provider: "gemini", apiKey, dailyRequestLimit: 10 });
   assert.ok(Object.isFrozen(config));
   assert.ok(Object.isFrozen(config.websiteAnalysis));
 });
@@ -374,6 +375,70 @@ test("rejects an unknown website analysis provider without echoing it", () => {
   }
 });
 
+test("a missing Gemini daily request limit fails closed", () => {
+  assert.throws(
+    () => loadConfig({
+      WEBSITE_ANALYSIS_PROVIDER: "gemini",
+      GEMINI_API_KEY: "synthetic-gemini-key",
+    }),
+    (error: unknown) => {
+      assert.ok(error instanceof WebsiteAnalysisConfigurationError);
+      assert.equal(error.code, "MISSING_GEMINI_DAILY_REQUEST_LIMIT");
+      assert.equal(
+        error.message,
+        "GEMINI_DAILY_REQUEST_LIMIT is required when website analysis provider is gemini.",
+      );
+      return true;
+    },
+  );
+});
+
+test("an invalid Gemini daily request limit fails closed", () => {
+  for (const limit of ["", "0", "01", " 1", "+1", "-1", "1.5", "1e2", "10001", "abc"]) {
+    assert.throws(
+      () => loadConfig({
+        WEBSITE_ANALYSIS_PROVIDER: "gemini",
+        GEMINI_API_KEY: "synthetic-gemini-key",
+        GEMINI_DAILY_REQUEST_LIMIT: limit,
+      }),
+      (error: unknown) => {
+        assert.ok(error instanceof WebsiteAnalysisConfigurationError);
+        assert.equal(error.code, "INVALID_GEMINI_DAILY_REQUEST_LIMIT");
+        assert.equal(error.message, "GEMINI_DAILY_REQUEST_LIMIT is invalid.");
+        return true;
+      },
+    );
+  }
+});
+
+test("a Gemini daily request limit of 1 and 10000 is accepted", () => {
+  for (const [limit, dailyRequestLimit] of [["1", 1], ["10000", 10000]] as const) {
+    const config = loadConfig({
+      WEBSITE_ANALYSIS_PROVIDER: "gemini",
+      GEMINI_API_KEY: "synthetic-gemini-key",
+      GEMINI_DAILY_REQUEST_LIMIT: limit,
+    });
+    assert.deepEqual(config.websiteAnalysis, {
+      provider: "gemini",
+      apiKey: "synthetic-gemini-key",
+      dailyRequestLimit,
+    });
+    assert.ok(Object.isFrozen(config.websiteAnalysis));
+  }
+});
+
+test("disabled website analysis does not require the request limit", () => {
+  for (const provider of [undefined, "disabled"] as const) {
+    for (const limit of [undefined, "nope"] as const) {
+      const config = loadConfig({
+        WEBSITE_ANALYSIS_PROVIDER: provider,
+        GEMINI_DAILY_REQUEST_LIMIT: limit,
+      });
+      assert.deepEqual(config.websiteAnalysis, { provider: "disabled" });
+    }
+  }
+});
+
 test("website analysis configuration parsing does not call fetch", () => {
   const originalFetch = globalThis.fetch;
   let fetchCalls = 0;
@@ -382,7 +447,11 @@ test("website analysis configuration parsing does not call fetch", () => {
     throw new Error("network access is forbidden during configuration parsing");
   }) as typeof fetch;
   try {
-    loadConfig({ WEBSITE_ANALYSIS_PROVIDER: "gemini", GEMINI_API_KEY: "synthetic-offline-key" });
+    loadConfig({
+      WEBSITE_ANALYSIS_PROVIDER: "gemini",
+      GEMINI_API_KEY: "synthetic-offline-key",
+      GEMINI_DAILY_REQUEST_LIMIT: "10",
+    });
     assert.equal(fetchCalls, 0);
   } finally {
     globalThis.fetch = originalFetch;

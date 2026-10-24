@@ -17,14 +17,19 @@ export type {
 export {
   GEMINI_MODELS,
   GEMINI_WEBSITE_ANALYSIS_ERROR_CODES,
+  GEMINI_WEBSITE_BATCH_SIZE,
   GeminiWebsiteAnalysisError,
   analyzeWebsiteWithGemini,
+  analyzeWebsitesWithGemini,
 } from "./providers/gemini";
 export type {
   GeminiModel,
   GeminiWebsiteAnalysisErrorCode,
   GeminiWebsiteAnalysisOptions,
   GeminiWebsiteAnalysisResult,
+  GeminiWebsiteBatchItem,
+  GeminiWebsiteBatchOptions,
+  GeminiWebsiteBatchResult,
 } from "./providers/gemini";
 export {
   WEBSITE_ANALYSIS_RUN_ERROR_CODES,
@@ -50,4 +55,5 @@ export type {
   D1WebsiteAnalysisPipelineDatabase,
   D1WebsiteAnalysisPipelineOptions,
   D1WebsiteAnalysisPipelineResult,
+  WebsiteAnalysisBudgetSummary,
 } from "./d1-analysis-pipeline";
