@@ -26,6 +26,8 @@ export const WEBSITE_ANALYSIS_CONFIGURATION_ERROR_CODES = [
   "INVALID_PROVIDER",
   "MISSING_GEMINI_API_KEY",
   "INVALID_GEMINI_API_KEY",
+  "MISSING_GEMINI_DAILY_REQUEST_LIMIT",
+  "INVALID_GEMINI_DAILY_REQUEST_LIMIT",
 ] as const;
 
 export type WebsiteAnalysisConfigurationErrorCode =
@@ -35,6 +37,9 @@ const websiteAnalysisMessages: Readonly<Record<WebsiteAnalysisConfigurationError
   INVALID_PROVIDER: "Invalid WEBSITE_ANALYSIS_PROVIDER. Expected disabled or gemini.",
   MISSING_GEMINI_API_KEY: "GEMINI_API_KEY is required when website analysis provider is gemini.",
   INVALID_GEMINI_API_KEY: "GEMINI_API_KEY is invalid.",
+  MISSING_GEMINI_DAILY_REQUEST_LIMIT:
+    "GEMINI_DAILY_REQUEST_LIMIT is required when website analysis provider is gemini.",
+  INVALID_GEMINI_DAILY_REQUEST_LIMIT: "GEMINI_DAILY_REQUEST_LIMIT is invalid.",
 };
 
 export class WebsiteAnalysisConfigurationError extends Error {

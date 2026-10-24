@@ -7,13 +7,19 @@ import {
   type D1CrawlDatabase,
 } from "../crawler/d1-crawl-store";
 import { CrawlEvidencePersistenceError } from "../crawler/evidence-domain";
-import { runD1WebsiteAnalysisPipeline } from "../website-analysis/d1-analysis-pipeline";
+import {
+  runD1WebsiteAnalysisPipeline,
+  type D1WebsiteAnalysisPipelineDatabase,
+} from "../website-analysis/d1-analysis-pipeline";
+
+export type CrawlGatewayDatabase = D1CrawlDatabase & D1WebsiteAnalysisPipelineDatabase;
 
 export type CrawlGatewayEnv = Readonly<{
-  DB: D1CrawlDatabase;
+  DB: CrawlGatewayDatabase;
   CRAWL_GATEWAY_TOKEN?: string;
   ANALYSIS_GATEWAY_TOKEN?: string;
   GEMINI_API_KEY?: string;
+  GEMINI_DAILY_REQUEST_LIMIT?: string;
 }>;
 
 export type CrawlGatewayDependencies = Readonly<{
@@ -25,6 +31,7 @@ const EVIDENCE_PATH = "/internal/crawl/evidence";
 const ANALYSIS_PATH = "/internal/analysis/run";
 const MAX_BODY_BYTES = 3_145_728;
 const geminiKeyPattern = /[\s\u0000-\u001f\u007f-\u009f]/u;
+const geminiDailyRequestLimitPattern = /^(?:[1-9][0-9]{0,4})$/;
 
 function jsonResponse(status: number, body: Readonly<Record<string, unknown>>): Response {
   return new Response(JSON.stringify(body), {
@@ -106,13 +113,28 @@ function isAnalysisAuthorized(request: Request, env: CrawlGatewayEnv): boolean {
   return tokensMatch(secret, header.slice("Bearer ".length));
 }
 
+function parseGeminiDailyRequestLimit(value: string | undefined): number | undefined {
+  if (value === undefined || !geminiDailyRequestLimitPattern.test(value)) {
+    return undefined;
+  }
+  const dailyRequestLimit = Number(value);
+  if (!Number.isInteger(dailyRequestLimit) || dailyRequestLimit < 1 || dailyRequestLimit > 10000) {
+    return undefined;
+  }
+  return dailyRequestLimit;
+}
+
 function geminiConfigFromEnv(env: CrawlGatewayEnv): GeminiWebsiteAnalysisConfig | undefined {
   const apiKey = env.GEMINI_API_KEY;
   if (typeof apiKey !== "string" || apiKey.length === 0 || geminiKeyPattern.test(apiKey)) {
     return undefined;
   }
+  const dailyRequestLimit = parseGeminiDailyRequestLimit(env.GEMINI_DAILY_REQUEST_LIMIT);
+  if (dailyRequestLimit === undefined) {
+    return undefined;
+  }
 
-  return Object.freeze({ provider: "gemini", apiKey });
+  return Object.freeze({ provider: "gemini", apiKey, dailyRequestLimit });
 }
 
 function isMaxItems(value: unknown): value is number {
@@ -213,6 +235,14 @@ async function handleAnalysis(
       failed: result.failed,
       retried: result.retried,
       persisted: result.persisted,
+      budget: {
+        utcDate: result.budget.utcDate,
+        websitesAdmitted: result.budget.websitesAdmitted,
+        websiteLimit: result.budget.websiteLimit,
+        geminiRequestsUsed: result.budget.geminiRequestsUsed,
+        geminiRequestLimit: result.budget.geminiRequestLimit,
+        stoppedReason: result.budget.stoppedReason,
+      },
     });
   } catch {
     return internalError();

@@ -28,6 +28,7 @@ export type WebsiteAnalysisConfig =
 export type GeminiWebsiteAnalysisConfig = Readonly<{
   provider: "gemini";
   apiKey: string;
+  dailyRequestLimit: number;
 }>;
 
 export type EnvironmentVariables = Readonly<Record<string, string | undefined>>;
@@ -100,6 +101,21 @@ function parseDatabaseUrl(
 }
 
 const whitespaceOrControlCharacterPattern = /[\s\u0000-\u001f\u007f-\u009f]/u;
+const geminiDailyRequestLimitPattern = /^(?:[1-9][0-9]{0,4})$/;
+
+function parseGeminiDailyRequestLimit(value: string | undefined): number {
+  if (value === undefined) {
+    throw new WebsiteAnalysisConfigurationError("MISSING_GEMINI_DAILY_REQUEST_LIMIT");
+  }
+  if (!geminiDailyRequestLimitPattern.test(value)) {
+    throw new WebsiteAnalysisConfigurationError("INVALID_GEMINI_DAILY_REQUEST_LIMIT");
+  }
+  const dailyRequestLimit = Number(value);
+  if (!Number.isInteger(dailyRequestLimit) || dailyRequestLimit < 1 || dailyRequestLimit > 10000) {
+    throw new WebsiteAnalysisConfigurationError("INVALID_GEMINI_DAILY_REQUEST_LIMIT");
+  }
+  return dailyRequestLimit;
+}
 
 function parseDiscoveryConfig(
   environment: EnvironmentVariables,
@@ -146,7 +162,11 @@ function parseWebsiteAnalysisConfig(
     throw new WebsiteAnalysisConfigurationError("INVALID_GEMINI_API_KEY");
   }
 
-  return Object.freeze({ provider: "gemini", apiKey });
+  return Object.freeze({
+    provider: "gemini",
+    apiKey,
+    dailyRequestLimit: parseGeminiDailyRequestLimit(environment.GEMINI_DAILY_REQUEST_LIMIT),
+  });
 }
 
 /**

@@ -5,9 +5,9 @@ import { test } from "node:test";
 
 import {
   handleCrawlGatewayRequest,
+  type CrawlGatewayDatabase,
   type CrawlGatewayEnv,
 } from "../../src/crawl-gateway/worker";
-import type { D1CrawlDatabase } from "../../src/crawler/d1-crawl-store";
 
 const TOKEN = "gateway-token-do-not-reflect";
 const HTML_SENTINEL = "<p>html-sentinel</p>";
@@ -50,11 +50,11 @@ type StatementResult = {
 };
 
 function createDatabase(behavior: StatementResult = {}): {
-  database: D1CrawlDatabase;
+  database: CrawlGatewayDatabase;
   prepareCount(): number;
 } {
   let prepares = 0;
-  const database: D1CrawlDatabase = {
+  const database: CrawlGatewayDatabase = {
     prepare() {
       prepares += 1;
       const statement = {
@@ -82,6 +82,9 @@ function createDatabase(behavior: StatementResult = {}): {
       };
       return statement;
     },
+    batch() {
+      return Promise.reject(new Error("unused"));
+    },
   };
   return {
     database,
@@ -91,7 +94,7 @@ function createDatabase(behavior: StatementResult = {}): {
   };
 }
 
-function gatewayEnv(database: D1CrawlDatabase, token?: string): CrawlGatewayEnv {
+function gatewayEnv(database: CrawlGatewayDatabase, token?: string): CrawlGatewayEnv {
   if (arguments.length < 2) {
     return { DB: database, CRAWL_GATEWAY_TOKEN: TOKEN };
   }

@@ -39,7 +39,7 @@ function factsAt(evidenceId: number, visibleText = "Visible page text"): Website
 }
 
 function geminiConfig(): GeminiWebsiteAnalysisConfig {
-  return { provider: "gemini", apiKey: API_KEY };
+  return { provider: "gemini", apiKey: API_KEY, dailyRequestLimit: 10 };
 }
 
 function succeededResult(facts: WebsiteFacts): GeminiWebsiteAnalysisResult {

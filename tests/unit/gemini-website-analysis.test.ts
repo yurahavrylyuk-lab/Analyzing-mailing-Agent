@@ -76,7 +76,7 @@ function facts(): WebsiteFacts {
 }
 
 function geminiConfig(): GeminiWebsiteAnalysisConfig {
-  return { provider: "gemini", apiKey: API_KEY };
+  return { provider: "gemini", apiKey: API_KEY, dailyRequestLimit: 10 };
 }
 
 function candidate() {

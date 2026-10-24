@@ -4,8 +4,7 @@ import { join } from "node:path";
 import { test } from "node:test";
 
 import { Miniflare } from "miniflare";
-import { handleCrawlGatewayRequest } from "../../src/crawl-gateway/worker";
-import type { D1CrawlDatabase } from "../../src/crawler/d1-crawl-store";
+import { handleCrawlGatewayRequest, type CrawlGatewayDatabase } from "../../src/crawl-gateway/worker";
 
 const TOKEN = "gateway-token-do-not-reflect";
 const urlA = "https://example.com/a";
@@ -14,7 +13,7 @@ const canonicalAttemptedAt = "2026-10-22T00:00:00.000Z";
 const bodyText = "<p>html-sentinel</p>";
 const byteLength = Buffer.byteLength(bodyText, "utf8");
 
-type CrawlDatabase = D1CrawlDatabase & {
+type CrawlDatabase = CrawlGatewayDatabase & {
   exec(sql: string): Promise<unknown>;
 };
 
@@ -51,7 +50,7 @@ async function withDatabase(use: (database: CrawlDatabase) => Promise<void>): Pr
 }
 
 async function insertLead(
-  database: D1CrawlDatabase,
+  database: CrawlDatabase,
   values: readonly unknown[],
 ): Promise<void> {
   await database
@@ -87,7 +86,7 @@ function manualLead(
 }
 
 async function insertEvidence(
-  database: D1CrawlDatabase,
+  database: CrawlDatabase,
   lead: string,
   outcome: "fetched" | "failed",
   requestedUrl: string,
@@ -146,7 +145,7 @@ function failedInput(lead: string, requestedUrl: string) {
 }
 
 async function post(
-  database: D1CrawlDatabase,
+  database: CrawlDatabase,
   path: string,
   body: unknown,
 ): Promise<Response> {
@@ -164,7 +163,7 @@ async function post(
 }
 
 async function selectCandidates(
-  database: D1CrawlDatabase,
+  database: CrawlDatabase,
   maxAttempts: number,
 ): Promise<readonly Record<string, unknown>[]> {
   const response = await post(database, "/internal/crawl/select", { maxAttempts });

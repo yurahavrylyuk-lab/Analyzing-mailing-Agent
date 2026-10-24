@@ -40,3 +40,29 @@ export const GEMINI_RESPONSE_FORMAT = {
     required: ["evidenceId", "leadId", "leadVersion", "summary", "findings"],
   },
 };
+
+export const GEMINI_WEBSITE_BATCH_PROMPT = [
+  GEMINI_WEBSITE_ANALYSIS_PROMPT,
+  "The input is a JSON array of website facts.",
+  "Return one JSON object whose only analysis collection is analyses.",
+  "Include one object for each supplied website.",
+  "Copy evidenceId, leadId, and leadVersion from that website.",
+  "Do not invent a website.",
+  "Do not merge websites.",
+  "Do not drop a valid website because another website cannot be analyzed.",
+].join("\n");
+
+export const GEMINI_BATCH_RESPONSE_FORMAT = {
+  type: "text",
+  mime_type: "application/json",
+  schema: {
+    type: "object",
+    properties: {
+      analyses: {
+        type: "array",
+        items: GEMINI_RESPONSE_FORMAT.schema,
+      },
+    },
+    required: ["analyses"],
+  },
+};
