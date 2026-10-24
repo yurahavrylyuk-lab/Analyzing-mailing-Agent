@@ -36,7 +36,7 @@ Every task includes this section.
 - `maxItems` stays an integer from 0 through 50 and is only the invocation bound. Daily quotas are separate. `maxItems === 0` validates the Gemini key and `GEMINI_DAILY_REQUEST_LIMIT`, reads the current UTC usage row, and must not select evidence, write admissions, alter daily usage, call Gemini, or persist an analysis. Its counters are 0. Its `stoppedReason` is `max_items`.
 - An in-flight retry whose reservation `batch()` runs after 00:00 UTC inserts no admission row. It charges website +0 and request +1 on the new UTC date. A later new invocation of the same still-eligible evidence on that new date charges website +1 and request +1. These are different paths. The retry must not insert the evidence ID under the new date.
 - Reservation exhaustion is a failed quota `batch()` or a next batch that cannot be composed. It is not a Gemini error and it is not `BUDGET_FAILED`. A corrupt usage read, a missing table, or a non-constraint D1 failure is `BUDGET_FAILED` with message `D1 website analysis budget ledger failed.` The Worker maps that throw to HTTP 500 `{ "error": "internal_error" }` and sends no further Gemini request. Analyses and units already committed stay committed.
-- If a reservation `batch()` fails, do not `fetch` for that proposal. Re-read. A second reservation is allowed only when at least one evidence ID from that proposal is now already admitted, so the composition changed. If the same composition still cannot fit the website cap or the request cap, stop. Do not shrink that failed proposal and reserve the subset.
+- If `reserveWebsiteAnalysisBatch` returns `false` because a proposed new evidence ID was admitted concurrently, re-read once and recompose that evidence as already admitted. The second reservation charges website +0 and request +1. If it commits and request budget remains, analyze the website and include it in `selected`. Do not mark it failed, skip it, or stop permanently on the first `false`. One recomposition is the only retry. A second `false` that is a real website-cap or request-cap failure does not `fetch`, does not count the untouched candidate as `selected` or `failed`, and does not reserve again. Do not shrink a failed proposal into a smaller new-ID subset.
 - `stoppedReason` precedence is `max_items`, then `request_cap`, then `website_cap`, then `no_evidence`. `websiteLimit` in the response is the literal 50.
 - Keep `POST /internal/analysis/run`, `ANALYSIS_GATEWAY_TOKEN`, crawl routes, `CRAWL_GATEWAY_TOKEN`, and the body `{ "maxItems": N }`. The Worker does not call `loadConfig()` and does not consult `WEBSITE_ANALYSIS_PROVIDER`. Invalid `maxItems` stays HTTP 400 before configuration is checked. Invalid key or limit is HTTP 500 with the fixed body, including when `maxItems` is 0. Do not echo the key, the limit, SQL, prompts, or analysis content.
 - Do not add cron, a scheduled Worker event, a GitHub Actions analysis workflow, automatic post-crawl analysis, run history, request history, failure history, token, cost, or latency ledgers, a monitoring dashboard, Durable Objects, KV, R2, queues, Redis, a claim, a lease, OpenRouter, Groq, Cloudflare Workers AI, another provider, qualification, contact discovery, DNC expansion, outreach, mailing, CRM, website generation, payments, or subscriptions. Do not add a generic budget engine, quota framework, provider registry, factory, or dependency-injection container.
@@ -51,7 +51,7 @@ These five cases are the ones a happy-path assertion would miss. Each one has th
 2. **Already-admitted rows before the last slot, without skipping.** Usage 49/50 and the read order is admitted A, admitted B, then new C, D, and E: analyze A, B, and C only. The evidence read uses `LIMIT maxItems`, not the one remaining slot, so A and B are visible. The walk stops at D and does not skip D to reach a later admitted row. Test: `usage 49 of 50 keeps admitted A and B and the next new candidate only` in Task 6.
 3. **Four valid siblings and one invalid sibling.** A completed envelope with four matches and one missing, duplicate, mismatched, or malformed match persists the four and fails the one. The batch is not sent again. Test: `four valid analyses persist when one sibling is invalid` in Task 3.
 4. **Midnight retry is not a new admission.** A retry reservation after 00:00 UTC charges the new date's request counter by 1, inserts no new-date admission, and leaves yesterday's `websites_admitted` unchanged. A separate later invocation of that same evidence on the new date inserts one new-date admission. Test: `an in-flight retry after midnight charges only the new day's request` in Task 5, with the new-invocation half asserted by `a new invocation after midnight admits the same evidence once` in Task 6.
-5. **A lost reservation does not fetch and does not double-count.** Two overlapping reservations of the same new evidence ID leave one admission row and increase `websites_admitted` once. The losing `batch()` rolls back its request increment. The provider performs no `fetch` when `reserveNextRequest` returns false. Test: `overlapping reservations of one evidence id admit it once` in Task 2, and `request exhaustion before fallback performs no further fetch` in Task 4.
+5. **A lost admission race recomposes instead of stopping.** Run A and Run B both start with evidence 123 as new. Run A wins today's admission. Run B's first `reserveWebsiteAnalysisBatch` returns `false`. Run B re-reads, recomposes 123 as already admitted, and reserves again with website +0 and request +1. The analyzer runs and `selected` includes 123. The daily website count increases once, and no second admission row is created. Test: `a lost admission race recomposes the evidence as already admitted` in Task 6. The ledger rollback stays `overlapping reservations of one evidence id admit it once` in Task 2. Fallback exhaustion stays `request exhaustion before fallback performs no further fetch` in Task 4.
 
 ## File structure
 
@@ -73,7 +73,7 @@ Modify:
 - `src/website-analysis/index.ts` — re-export those batch symbols beside the existing Gemini exports.
 - `src/website-analysis/pipeline-errors.ts` — `INVALID_CONFIGURATION` and `BUDGET_FAILED`.
 - `src/website-analysis/d1-analysis-pipeline.ts` — budget-aware selection, batch execution, one retry round, and the budget summary. The database type gains `batch`.
-- `src/crawl-gateway/worker.ts` — parse `GEMINI_DAILY_REQUEST_LIMIT` and copy `budget` onto HTTP 200.
+- `src/crawl-gateway/worker.ts` — parse `GEMINI_DAILY_REQUEST_LIMIT`, widen `CrawlGatewayEnv["DB"]` to `CrawlGatewayDatabase`, and copy `budget` onto HTTP 200. Crawl routes stay on the same binding.
 - `tests/unit/config-env.test.ts` — limit parsing. Existing disabled-provider tests stay, and they do not start requiring the limit.
 - `tests/unit/crawl-gateway-analysis.test.ts` — limit validation now, budget body in Task 7. Crawl authorization tests stay.
 - `tests/unit/gemini-website-analysis.test.ts` — add `dailyRequestLimit` to the existing config helper so the required field typechecks. Do not change single-website fallback assertions.
@@ -291,7 +291,13 @@ for (const candidate of unsent) {
 
 If `batch` is empty because the next candidate is new and `slotsLeft` is 0, stop with `website_cap`. If `batch` is empty because `unsent` is empty, stop with `no_evidence` unless an earlier precedence rule matches. If a request unit does not remain, do not call `reserveWebsiteAnalysisBatch` and stop with `request_cap`.
 
-On `true`, remove that batch from `unsent` and call `analyzeWebsitesWithGemini` with `firstRequestReserved: true`. On `false`, re-read usage and admissions for the proposal. If any proposed new ID is now in the admission set, compose once more from the first candidate that was not in a committed batch and reserve that new composition once. If the composition is unchanged, or it still does not fit, stop. Do not reserve a smaller subset of the failed proposal.
+On `true`, remove that batch from `unsent` and call `analyzeWebsitesWithGemini` with `firstRequestReserved: true`.
+
+Task 5 stops on every `reserveWebsiteAnalysisBatch` result of `false`: it does not call the analyzer, and those websites are not `selected` and not `failed`. Task 6 replaces that stop-on-false rule for the duplicate-admission race only.
+
+When the proposal treated an evidence ID as new and the first `reserveWebsiteAnalysisBatch` returns `false` because that `(utc_date, evidence_id)` now exists, re-read usage and admissions once. If that evidence ID is now already admitted, recompose from the first candidate that was not in a committed batch, using the updated admission set. The second `reserveWebsiteAnalysisBatch` omits that evidence ID from `newEvidenceIds`, so the website charge is +0 and the request charge is +1. If that second call returns `true` and request budget remains, call the analyzer. The evidence counts in `selected`. Do not mark it `failed` because the first reservation lost, do not skip it, and do not stop permanently on the first `false`.
+
+That second reservation is the only recomposition. If it returns `false` because the website cap or the request cap still does not fit, stop. Do not call the analyzer, do not count the untouched evidence as `selected` or `failed`, and do not reserve a third time. A `false` that is not this race also stops under the Task 5 rule. Do not shrink the failed proposal into a smaller new-ID subset. There is no retry loop.
 
 Worked results the tests pin:
 
@@ -404,6 +410,14 @@ batch(
 ): Promise<readonly unknown[]>;
 ```
 
+Task 2 widens the production binding in `src/crawl-gateway/worker.ts`. `D1CrawlDatabase` in `src/crawler/d1-crawl-store.ts` stays a `prepare` database. The Worker type is:
+
+```ts
+export type CrawlGatewayDatabase = D1CrawlDatabase & D1WebsiteAnalysisPipelineDatabase;
+```
+
+`CrawlGatewayEnv["DB"]` becomes `CrawlGatewayDatabase`. `prepare` remains available to `selectD1CrawlCandidates` and `persistD1CrawlEvidence`. `batch` is available to the analysis quota calls. Pass `env.DB` through with no cast. Do not change crawl routes, crawl authentication, crawl selection, or crawl persistence.
+
 `D1_WEBSITE_ANALYSIS_PIPELINE_ERROR_CODES` gains `"INVALID_CONFIGURATION"` and `"BUDGET_FAILED"`, with messages `D1 website analysis configuration is invalid.` and `D1 website analysis budget ledger failed.`
 
 `WEBSITE_ANALYSIS_CONFIGURATION_ERROR_CODES` gains `"MISSING_GEMINI_DAILY_REQUEST_LIMIT"` and `"INVALID_GEMINI_DAILY_REQUEST_LIMIT"`. Messages: `GEMINI_DAILY_REQUEST_LIMIT is required when website analysis provider is gemini.` and `GEMINI_DAILY_REQUEST_LIMIT is invalid.` The Worker does not throw this class. It returns the fixed HTTP 500 body.
@@ -496,14 +510,16 @@ git commit -m "feat: add Gemini daily analysis budget config"
 **Files:**
 - Create: `migrations/0004_website_analysis_daily_usage.sql`
 - Create: `src/website-analysis/daily-usage.ts`
+- Create: `tests/integration/website-analysis-daily-usage.test.ts`
 - Modify: `src/website-analysis/pipeline-errors.ts`
 - Modify: `src/website-analysis/d1-analysis-pipeline.ts` (add `batch` to the database type only)
+- Modify: `src/crawl-gateway/worker.ts` (widen `CrawlGatewayEnv["DB"]` only)
 - Modify: `tests/integration/d1-website-analysis-pipeline.test.ts` (add a `batch` method to the local database doubles so the widened type typechecks; do not change their assertions)
-- Test: `tests/integration/website-analysis-daily-usage.test.ts`
+- Modify: `tests/unit/crawl-gateway-worker.test.ts`, `tests/unit/crawl-gateway-analysis.test.ts`, and `tests/integration/crawl-gateway-d1.test.ts` (add `batch` on the test doubles or widen their database annotations so `npm run typecheck` accepts `env.DB`; do not change crawl assertions)
 
 **Interfaces:**
-- Consumes: `D1WebsiteAnalysisPipelineDatabase` and `D1WebsiteAnalysisPipelineError`.
-- Produces: the signatures in Reservation algorithm. Later tasks import them from `src/website-analysis/daily-usage.ts`.
+- Consumes: `D1CrawlDatabase`, `D1WebsiteAnalysisPipelineDatabase`, and `D1WebsiteAnalysisPipelineError`. `selectD1CrawlCandidates` and `persistD1CrawlEvidence` keep their `D1CrawlDatabase` parameters.
+- Produces: the signatures in Reservation algorithm, imported by later tasks from `src/website-analysis/daily-usage.ts`. Produces `CrawlGatewayDatabase` as `D1CrawlDatabase & D1WebsiteAnalysisPipelineDatabase`, used by `CrawlGatewayEnv["DB"]`. Task 6 calls `reserveWebsiteAnalysisBatch` and `reserveGeminiRequest` through that database.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -529,22 +545,26 @@ Do not create a run-history table. Do not assert tokens, cost, latency, or error
 
 Targeted command for `tests/integration/website-analysis-daily-usage.test.js`.
 
-Expected RED: `tsc` cannot find `reserveWebsiteAnalysisBatch` or the module `src/website-analysis/daily-usage.ts`. Do not accept a missing migration assertion as a pass.
+Expected RED: `tsc` cannot find `reserveWebsiteAnalysisBatch` or the module `src/website-analysis/daily-usage.ts`. Do not accept a missing migration assertion as a pass. `npm run typecheck` still passes at this RED, because `batch` is not required yet. The Worker compatibility proof is the GREEN typecheck below, not this RED.
 
 - [ ] **Step 3: Implement the minimum**
 
 Add the migration and functions exactly as specified in Reservation algorithm. Add the two pipeline error codes before the daily-usage module throws them. Add `batch` to `D1WebsiteAnalysisPipelineDatabase`. In `tests/integration/d1-website-analysis-pipeline.test.ts`, add `batch()` to `TestDatabase`, `throwingDatabase`, and the barrel-contract database literal. Those methods throw `Error("unused")` or return `Promise.resolve([])` without being called. Do not change pipeline behavior or the existing assertions in this task.
 
+In `src/crawl-gateway/worker.ts`, import `type D1WebsiteAnalysisPipelineDatabase` from the pipeline module and add the exported `CrawlGatewayDatabase` intersection from Public contracts. Change `CrawlGatewayEnv["DB"]` to that type. Keep passing `env.DB` to `selectD1CrawlCandidates`, `persistD1CrawlEvidence`, and `runD1WebsiteAnalysisPipeline` with no cast. Do not change crawl routes, crawl authentication, crawl selection, or crawl persistence.
+
+On the unit-test doubles in `tests/unit/crawl-gateway-worker.test.ts` and `tests/unit/crawl-gateway-analysis.test.ts`, add `batch()` that rejects with `Error("unused")`. Type those helpers' database parameters as `CrawlGatewayDatabase`. In `tests/integration/crawl-gateway-d1.test.ts`, widen `CrawlDatabase` to `CrawlGatewayDatabase & { exec(sql: string): Promise<unknown> }`. Miniflare's D1 already has `batch` and `exec`. Crawl assertions stay as they are. Do not call `batch` from a crawl route.
+
 - [ ] **Step 4: Run focused tests and the relevant regression**
 
-Targeted command for `tests/integration/website-analysis-daily-usage.test.js` and `tests/integration/d1-website-analysis-pipeline.test.js`.
+Targeted command for `tests/integration/website-analysis-daily-usage.test.js`, `tests/integration/d1-website-analysis-pipeline.test.js`, `tests/unit/crawl-gateway-worker.test.js`, and `tests/unit/crawl-gateway-analysis.test.js`. Then run `npm run typecheck`.
 
-Expected: PASS. The existing pipeline test still applies only through migration 0003 because this task does not change its runtime path.
+Expected: PASS, including `npm run typecheck` exit 0. `env.DB` is accepted by the crawl `prepare` stores and by the analysis database type's `batch` without a cast. This GREEN does not wait for Task 7. The existing pipeline test still applies only through migration 0003 because this task does not change its runtime path. Crawl route assertions are unchanged.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add migrations/0004_website_analysis_daily_usage.sql src/website-analysis/daily-usage.ts src/website-analysis/pipeline-errors.ts src/website-analysis/d1-analysis-pipeline.ts tests/integration/website-analysis-daily-usage.test.ts tests/integration/d1-website-analysis-pipeline.test.ts
+git add migrations/0004_website_analysis_daily_usage.sql src/website-analysis/daily-usage.ts src/website-analysis/pipeline-errors.ts src/website-analysis/d1-analysis-pipeline.ts src/crawl-gateway/worker.ts tests/integration/website-analysis-daily-usage.test.ts tests/integration/d1-website-analysis-pipeline.test.ts tests/unit/crawl-gateway-worker.test.ts tests/unit/crawl-gateway-analysis.test.ts tests/integration/crawl-gateway-d1.test.ts
 git commit -m "feat: add D1 analysis budget ledger"
 ```
 
@@ -674,7 +694,7 @@ Retarget these existing tests in `tests/integration/d1-website-analysis-pipeline
 
 Apply migration 0004 in this file's `withDatabase` helper before these new tests run. Existing selection tests that do not call Gemini must still pass.
 
-Extend `ZERO_SUMMARY` and the barrel-contract sample with `budget` so they match the widened result. For this task, `maxItems === 0` still prepares nothing: its provisional budget is `utcDate` from the clock, both stored counters 0, `websiteLimit` 50, `geminiRequestLimit` copied from config, and `stoppedReason` `"max_items"`. Task 6 replaces that provisional zero-run with the ledger read. A failed reservation is not `selected` and not `failed`.
+Extend `ZERO_SUMMARY` and the barrel-contract sample with `budget` so they match the widened result. For this task, `maxItems === 0` still prepares nothing: its provisional budget is `utcDate` from the clock, both stored counters 0, `websiteLimit` 50, `geminiRequestLimit` copied from config, and `stoppedReason` `"max_items"`. Task 6 replaces that provisional zero-run with the ledger read. Task 5's stop-on-false rule applies when the website cap or the request cap truly cannot be reserved: the analyzer is not called, and those websites are not `selected` and not `failed`. Do not implement the duplicate-admission recomposition in this task. Task 6 replaces this stop-on-false rule for that race.
 
 Add:
 
@@ -696,11 +716,11 @@ Expected RED: `an in-flight retry after midnight charges only the new day's requ
 
 - [ ] **Step 3: Implement the minimum**
 
-Stop calling `runWebsiteAnalysis` from the pipeline. For the facts extracted from the current selector, group them in that order into arrays of at most 5. Before each group, call `reserveWebsiteAnalysisBatch` with the IDs that `readWebsiteAnalysisAdmissions` does not already contain. On `true`, call `analyzeBatch` or `analyzeWebsitesWithGemini` with `firstRequestReserved: true` and a `reserveNextRequest` that calls `reserveGeminiRequest` for `utcAnalysisDate(clock)` at that moment. On `false`, do not call the analyzer for that group.
+Stop calling `runWebsiteAnalysis` from the pipeline. For the facts extracted from the current selector, group them in that order into arrays of at most 5. Before each group, call `reserveWebsiteAnalysisBatch` with the IDs that `readWebsiteAnalysisAdmissions` does not already contain. On `true`, call `analyzeBatch` or `analyzeWebsitesWithGemini` with `firstRequestReserved: true` and a `reserveNextRequest` that calls `reserveGeminiRequest` for `utcAnalysisDate(clock)` at that moment. On `false`, do not call the analyzer and do not count the group as `selected` or `failed`. That stop-on-false rule is only for a reservation that truly cannot be reserved. Task 6 replaces it when the `false` means a proposed new evidence ID became already admitted. This task must not recompose and must not loop.
 
 A thrown `GEMINI_TRANSPORT_UNAVAILABLE` defers that same facts array. Any other thrown `GeminiWebsiteAnalysisError`, and a returned `requestExhausted: true`, is terminal for the unresolved websites in that group and is not deferred. After the first pass, replay deferred groups once, as specified in Midnight clock. The retry calls `reserveGeminiRequest`, not `reserveWebsiteAnalysisBatch`. If it returns `false`, those websites fail with `retried: false` and the analyzer is not called. If the retry call sends an HTTP request, the websites in that call have `retried: true`, including a second transport failure.
 
-Persist `ok: true` items sequentially in the order they entered the invocation, through `persistD1WebsiteAnalysis`. Do not persist `ok: false` items. Add `budget` with `stoppedReason` `"max_items"` when `maxItems === 0` or `selected === maxItems`, and `"no_evidence"` when the selected evidence is exhausted. Task 6 adds `request_cap` and `website_cap`. `maxItems === 0` in this task still returns before D1. Do not implement the 49/50 early stop here: the current selector may still return every eligible row, and this task's tests do not seed a nearly full cap. A failed `reserveWebsiteAnalysisBatch` does not count those websites as `selected` or `failed`. Do not leave the runner admitting a second time on retry.
+Persist `ok: true` items sequentially in the order they entered the invocation, through `persistD1WebsiteAnalysis`. Do not persist `ok: false` items. Add `budget` with `stoppedReason` `"max_items"` when `maxItems === 0` or `selected === maxItems`, and `"no_evidence"` when the selected evidence is exhausted. Task 6 adds `request_cap` and `website_cap`. `maxItems === 0` in this task still returns before D1. Do not implement the 49/50 early stop here: the current selector may still return every eligible row, and this task's tests do not seed a nearly full cap. A `reserveWebsiteAnalysisBatch` result of `false` in this task does not count those websites as `selected` or `failed`. Task 6 replaces that stop for the duplicate-admission race. Do not leave the runner admitting a second time on retry.
 
 Re-export `analyzeWebsitesWithGemini` and its result types from `src/website-analysis/index.ts` beside the existing Gemini exports. Do not export `runWebsiteAnalysis` removal; that function stays exported.
 
@@ -724,8 +744,8 @@ git commit -m "feat: run website analysis in batches"
 - Test: `tests/integration/d1-website-analysis-pipeline.test.ts`
 
 **Interfaces:**
-- Consumes: the Task 5 runner, `SELECTION_SQL`, `readWebsiteAnalysisDailyUsage`, `readWebsiteAnalysisAdmissions`, `reserveWebsiteAnalysisBatch`, and `DAILY_WEBSITE_CAP`.
-- Produces: the pipeline order in the approved design: invalid `maxItems`, invalid `dailyRequestLimit`, zero-run read, request-cap short circuit, selection, facts extraction, composition, reservation, analysis, retry, persistence, frozen summary. `budget.stoppedReason` uses the precedence in Global Constraints.
+- Consumes: the Task 5 runner, `analyzeWebsitesWithGemini` and `GeminiWebsiteBatchResult` from Tasks 3 and 4, `analyzeBatch` and `reserveGeminiRequest` from Task 5, `SELECTION_SQL`, `readWebsiteAnalysisDailyUsage`, `readWebsiteAnalysisAdmissions`, `reserveWebsiteAnalysisBatch`, and `DAILY_WEBSITE_CAP` from Task 2. The database value is a `D1WebsiteAnalysisPipelineDatabase` with `batch`, which `CrawlGatewayDatabase` satisfies.
+- Produces: the pipeline order in the approved design: invalid `maxItems`, invalid `dailyRequestLimit`, zero-run read, request-cap short circuit, selection, facts extraction, composition, reservation, the one duplicate-admission recomposition, analysis, retry, persistence, frozen summary. `budget.stoppedReason` uses the precedence in Global Constraints. Task 5's stop-on-false rule is replaced here for the duplicate-admission race.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -742,6 +762,7 @@ Add these tests to `tests/integration/d1-website-analysis-pipeline.test.ts`. See
 - `a same-day reattempt adds no website slot and counts as selected`: A was admitted earlier and has no analysis row because the first analysis failed. The next invocation's `selected` includes A. `websites_admitted` is unchanged. `gemini_requests_used` increases by 1 before the analyzer stub runs.
 - `a new invocation after midnight admits the same evidence once`: the previous UTC date has A's admission and `websites_admitted` 1. The clock is `2026-10-25T00:00:01.000Z`. A has no analysis row. The invocation admits A on `2026-10-25`. That date's `websites_admitted` is 1 and `gemini_requests_used` is 1. The previous date's `websites_admitted` stays 1.
 - `selected equals succeeded plus failed when a later batch is not entered`: `maxItems` 6, two batches worth of new rows, and `dailyRequestLimit` 1. The first five are selected. The sixth is not `selected` or `failed`. `gemini_requests_used` is 1.
+- `a lost admission race recomposes the evidence as already admitted`: seed one eligible evidence row with `id` 123 and no `website_analyses` row. Do not insert an admission before the pipeline's planning read, so both the test and the pipeline initially treat 123 as new. `dailyRequestLimit` is at least 2. `maxItems` is 1. Wrap the Miniflare database. The first `batch()` whose statements insert `website_analysis_daily_admissions` for 123 is Run B's losing reservation: before rejecting it, insert Run A's admission row `(utcDate, 123)` through the inner database so the count trigger leaves `websites_admitted` at 1. Do not increment that counter a second time by hand. Leave `gemini_requests_used` at 0. Reject that outer `batch()` with an error message containing `UNIQUE constraint failed`, and do not apply Run B's statements. The next admission read must return 123. The second `batch()` must be the request-only reservation, with no admission `INSERT`. Forward it to the inner database so it commits. `analyzeBatch` returns one `ok: true` item for 123. Assert the analyzer was called once with evidence 123, `selected` is 1, `succeeded` is 1, `failed` is 0, and `persisted` is 1. Assert one admission row exists for 123, `websites_admitted` is 1, and `gemini_requests_used` is 1. Assert `batch()` ran twice for this invocation: the rejected admission batch and the successful request-only batch. A third reservation fails the test. This is a database wrapper in the existing test style, not a concurrency framework. Use the real `reserveWebsiteAnalysisBatch`.
 
 The `maxItems 0 reads the ledger and writes nothing` test replaces `maxItems 0 returns a frozen zero summary without D1 work`. Do not keep both. Keep the assertions that Gemini is not called, nothing is persisted, and the five counters are 0. Do not delete the invalid-`maxItems` test; it still prepares nothing.
 
@@ -749,7 +770,7 @@ The `maxItems 0 reads the ledger and writes nothing` test replaces `maxItems 0 r
 
 Targeted command for `tests/integration/d1-website-analysis-pipeline.test.js`.
 
-Expected RED: `usage 49 of 50 admits only the first of five new candidates` fails because the analyzer received more than one evidence ID, or because `stoppedReason` is not `website_cap`. That is the specific RED for this task.
+Expected RED: `usage 49 of 50 admits only the first of five new candidates` fails because the analyzer received more than one evidence ID, or because `stoppedReason` is not `website_cap`. Also expected RED: `a lost admission race recomposes the evidence as already admitted` fails because Task 5 stopped on the first `false`, so `analyzeBatch` was not called or `selected` is 0. Do not accept a ledger-only assertion as this RED.
 
 - [ ] **Step 3: Implement the minimum**
 
@@ -757,7 +778,7 @@ Implement the pipeline order and the Batch composition algorithm. Validate `dail
 
 When `geminiRequestsUsed >= dailyRequestLimit`, return before `SELECTION_SQL` with `request_cap`. Otherwise select with `LIMIT maxItems`. Extract facts before the first reservation. A `CrawlEvidencePersistenceError` or `WebsiteFactsError` still propagates, and no reservation has run.
 
-Use one fresh usage read before each batch. Follow the recompose rule in Reservation algorithm. Set `stoppedReason` by the first matching precedence rule. Freeze the summary. `websiteLimit` is the literal `50`.
+Use one fresh usage read before each batch. Implement the duplicate-admission recomposition in Batch composition algorithm. This replaces Task 5's stop-on-false rule for that race: re-read once, recompose the evidence as already admitted, reserve a second time with `newEvidenceIds` empty for that evidence, and on `true` call the analyzer and count it in `selected`. Do not mark it `failed` for the lost first reservation. If the second reservation returns `false` because the request cap or website cap still fails, do not call the analyzer, do not count the untouched evidence as `selected` or `failed`, and do not reserve again. One recomposition only. Set `stoppedReason` by the first matching precedence rule. Freeze the summary. `websiteLimit` is the literal `50`.
 
 Do not add a second selector. Do not change `SELECTION_SQL`'s `ORDER BY`.
 
@@ -883,7 +904,8 @@ This checklist is not a task. The Builder does not run it. Merging this slice do
 
 - Batch size 5 and the 50-website cap are Tasks 3 and 6.
 - Request reservation before every `fetch`, fallback, and retry is Tasks 2, 4, and 5.
-- The 49/50, 50/50, admitted-prefix, and no-skip cases are Task 6.
+- The 49/50, 50/50, admitted-prefix, no-skip, and duplicate-admission recomposition cases are Task 6.
+- `CrawlGatewayDatabase` is introduced in Task 2 so `env.DB` typechecks before Task 7.
 - Partial success and identity mapping are Task 3.
 - Midnight retry versus a new invocation is Tasks 5 and 6.
 - `maxItems` 0 and invalid configuration are Tasks 1 and 6.
